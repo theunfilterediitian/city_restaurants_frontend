@@ -65,7 +65,7 @@ export default function Login({ setAuth }) {
                   type="text"
                   required
                   className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:bg-white focus:border-indigo-200 transition-all font-bold text-sm"
-                  placeholder="admin_username"
+                  placeholder="restaurent username"
                   onChange={(e) => setCredentials({...credentials, username: e.target.value})}
                 />
               </div>
