@@ -1,338 +1,511 @@
-    import { useEffect, useState } from "react";
-    import { useParams } from "react-router-dom";
-    import { api } from "../services/api";
-    import { 
-    MapPin, Utensils, ShieldCheck, ShoppingBag, 
-    Info, Star, Clock, Globe, ChevronRight, X, ChevronLeft
-    } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { api } from "../services/api";
+import {
+  MapPin,
+  Utensils,
+  ShoppingBag,
+  Clock,
+  X,
+  Plus,
+  Minus,
+  ShoppingBasket,
+  Filter,
+} from "lucide-react";
 
-    export default function PublicRestaurantView() {
-    const { country, state, city, identifier } = useParams();
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [activeCategory, setActiveCategory] = useState("All");
-    const [selectedProduct, setSelectedProduct] = useState(null);
-    const [isVegOnly, setIsVegOnly] = useState(false);
+/* ================= CART STATE ================= */
 
-    useEffect(() => {
-        const loadPublicData = async () => {
-        try {
-            const res = await api.getPublicRestaurantProfile(country, state, city, identifier);
-            setData(res.data);
-        } catch (err) {
-            console.error("Restaurant not found", err);
-        } finally {
-            setLoading(false);
-        }
-        };
-        loadPublicData();
-        window.scrollTo(0, 0);
-    }, [country, state, city, identifier]);
+function useCartState() {
+  const [items, setItems] = useState([]);
 
-    if (loading) return <LoadingScreen />;
-    if (!data?.restaurant) return <NotFound />;
+  const addItem = (item) => {
+    setItems((prev) => {
+      const existing = prev.find(
+        (i) =>
+          i.productId === item.productId &&
+          i.sizeLabel === item.sizeLabel
+      );
 
-    const { restaurant, products } = data;
-    const categories = ["All", ...new Set(products.flatMap(p => p?.categories?.map(c => c.name) || []))];
-    const filteredProducts = products.filter(p => {
-        const matchesCategory = activeCategory === "All" || p?.categories?.some(c => c.name === activeCategory);
-        const matchesVeg = isVegOnly ? p.veg === true : true;
-        return matchesCategory && matchesVeg;
+      if (existing) {
+        return prev.map((i) =>
+          i === existing ? { ...i, qty: i.qty + item.qty } : i
+        );
+      }
+      return [...prev, item];
     });
+  };
 
-    // Helper to find the lowest price
-    const getMinPrice = (product) => {
-        if (product.price) return product.price;
-        if (product.sizes && product.sizes.length > 0) {
-        return Math.min(...product.sizes.map(s => s.price));
-        }
-        return "0";
+  const updateQty = (productId, sizeLabel, qty) => {
+    setItems((prev) =>
+      prev
+        .map((i) =>
+          i.productId === productId && i.sizeLabel === sizeLabel
+            ? { ...i, qty }
+            : i
+        )
+        .filter((i) => i.qty > 0)
+    );
+  };
+
+  const clear = () => setItems([]);
+
+  return { items, addItem, updateQty, clear };
+}
+
+/* ================= MAIN PAGE ================= */
+
+export default function PublicRestaurantView() {
+  const { country, state, city, identifier } = useParams();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [modalItem, setModalItem] = useState(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  
+  const cart = useCartState();
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await api.getPublicRestaurantProfile(
+        country,
+        state,
+        city,
+        identifier
+      );
+      setData(res.data);
+      setLoading(false);
     };
+    load();
+  }, [country, state, city, identifier]);
 
-    return (
-        <div className="min-h-screen bg-slate-50/30 pb-20 font-sans">
-        {/* 1. BREADCRUMBS */}
-        <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            <Globe size={12} />
-            <span>{country}</span>
-            <ChevronRight size={10} />
-            <span>{state}</span>
-            <ChevronRight size={10} />
-            <span>{city}</span>
-        </nav>
+  if (loading) return <LoadingScreen />;
+  if (!data?.restaurant) return <NotFound />;
 
-        {/* 2. HEADER SECTION */}
-        <header className="bg-white border-y border-slate-100 mb-8">
-            <div className="max-w-6xl mx-auto px-6 py-10">
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-                <div className="h-28 w-28 rounded-3xl bg-slate-50 border border-slate-100 shadow-sm flex-shrink-0 overflow-hidden ring-4 ring-slate-50">
-                {restaurant.logo_url ? (
-                    <img src={restaurant.logo_url} alt="logo" className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-200"><Utensils size={40} /></div>
-                )}
-                </div>
+  const { restaurant, products } = data;
 
-                <div className="flex-1 space-y-3">
-                <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">{restaurant.name}</h1>
-                    {restaurant.pure_veg && (
-                    <span className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                        <ShieldCheck size={12} fill="currentColor" fillOpacity={0.2} /> Pure Veg
-                    </span>
-                    )}
-                </div>
-                <div className="flex flex-wrap gap-x-6 gap-y-2 text-slate-500 font-semibold text-sm">
-                    <div className="flex items-center gap-2"><Utensils size={16} className="text-indigo-500" /><span>{restaurant.type || "Restaurant"}</span></div>
-                    <div className="flex items-center gap-2"><MapPin size={16} className="text-indigo-500" /><span>{restaurant.location}</span></div>
-                    <div className="flex items-center gap-2"><Clock size={16} className="text-indigo-500" /><span>Open Now</span></div>
-                </div>
-                </div>
-            </div>
-            </div>
-        </header>
+  // Extract all unique categories from products
+  const allCategories = Array.from(
+    new Set(
+      products.flatMap(p => 
+        p.categories?.map(cat => cat.name) || []
+      )
+    )
+  ).sort();
 
-        {/* 3. MENU CONTENT */}
-        <main className="max-w-6xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 md:pb-0">
-                    {categories.map((cat) => (
-                        <button
-                        key={cat}
-                        onClick={() => setActiveCategory(cat)}
-                        className={`px-5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border ${
-                            activeCategory === cat ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200" : "bg-white text-slate-500 border-slate-100 hover:border-slate-300"
-                        }`}
-                        >
-                        {cat}
-                        </button>
-                    ))}
-                </div>
+  // Filter products based on selected categories
+  const filteredProducts = selectedCategories.length > 0
+    ? products.filter(product =>
+        product.categories?.some(cat => 
+          selectedCategories.includes(cat.name)
+        )
+      )
+    : products;
 
-                {/* VEG TOGGLE SWITCH */}
-                <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-100 w-fit">
-                    <span className={`text-[10px] font-black uppercase tracking-widest pl-2 ${isVegOnly ? 'text-slate-400' : 'text-slate-900'}`}>All</span>
-                    <button 
-                    onClick={() => setIsVegOnly(!isVegOnly)}
-                    className={`relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none ${isVegOnly ? 'bg-emerald-500' : 'bg-slate-200'}`}
-                    >
-                    <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 transform ${isVegOnly ? 'translate-x-6' : 'translate-x-0'}`} />
-                    </button>
-                    <span className={`text-[10px] font-black uppercase tracking-widest pr-2 ${isVegOnly ? 'text-emerald-600' : 'text-slate-400'}`}>Veg Only</span>
-                </div>
-            </div>
+  const toggleCategory = (categoryName) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryName)
+        ? prev.filter(c => c !== categoryName)
+        : [...prev, categoryName]
+    );
+  };
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProducts.map((product) => (
-                <div 
-                key={product.id} 
-                onClick={() => setSelectedProduct(product)}
-                className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden flex flex-col group hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500 cursor-pointer"
+  const clearFilters = () => {
+    setSelectedCategories([]);
+    setFilterOpen(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-32">
+      {/* HEADER */}
+      <header className="bg-white px-6 py-8 border-b">
+        <h1 className="text-4xl font-black">{restaurant.name}</h1>
+        <div className="flex gap-4 mt-2 text-slate-500">
+          <span className="flex gap-1">
+            <Utensils size={16} /> {restaurant.type}
+          </span>
+          <span className="flex gap-1">
+            <MapPin size={16} /> {restaurant.location}
+          </span>
+          <span className="flex gap-1">
+            <Clock size={16} /> Open Now
+          </span>
+        </div>
+      </header>
+
+      {/* FILTER BAR */}
+      <div className="px-6 mt-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-black">Menu</h2>
+          <button
+            onClick={() => setFilterOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border rounded-xl font-medium"
+          >
+            <Filter size={16} />
+            Filter
+            {selectedCategories.length > 0 && (
+              <span className="bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
+                {selectedCategories.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Selected Categories Pills */}
+        {selectedCategories.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {selectedCategories.map(cat => (
+              <span
+                key={cat}
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium"
+              >
+                {cat}
+                <button
+                  onClick={() => toggleCategory(cat)}
+                  className="hover:text-emerald-900"
                 >
-                <div className="relative h-64 w-full bg-slate-50 overflow-hidden">
-                    {product.images?.[0] ? (
-                    <img src={product.images[0].image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                    ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-200"><ShoppingBag size={48} /></div>
-                    )}
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md p-2 rounded-xl border border-slate-100">
-                    <div className={`h-3 w-3 rounded-full ${product.veg ? 'bg-emerald-500' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`} />
-                    </div>
-                </div>
-
-                <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-black text-slate-900 text-xl tracking-tight leading-tight">{product.name}</h3>
-                    <div className="text-indigo-600 font-black text-xl">₹{getMinPrice(product)}</div>
-                    </div>
-                    <p className="text-slate-500 text-sm leading-relaxed line-clamp-2">{product.description}</p>
-                </div>
-                </div>
+                  <X size={14} />
+                </button>
+              </span>
             ))}
-            </div>
-
-            {filteredProducts.length === 0 && (
-                <div className="py-20 text-center">
-                    <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                        <Utensils size={24} />
-                    </div>
-                    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No items found matching your filter</p>
-                </div>
-            )}
-        </main>
-
-        {/* 4. PRODUCT DETAIL MODAL */}
-        {selectedProduct && (
-            <ProductModal 
-            product={selectedProduct} 
-            onClose={() => setSelectedProduct(null)} 
-            getMinPrice={getMinPrice}
-            />
-        )}
-        </div>
-    );
-    }
-    function ProductModal({ product, onClose, getMinPrice }) {
-    const [currentImg, setCurrentImg] = useState(0);
-
-    // Auto-sliding logic for images
-    useEffect(() => {
-        if (!product.images || product.images.length <= 1) return;
-        const interval = setInterval(() => {
-        setCurrentImg((prev) => (prev + 1) % product.images.length);
-        }, 4000); // 4 seconds per slide
-        return () => clearInterval(interval);
-    }, [product.images]);
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-300">
-        {/* Backdrop */}
-        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={onClose} />
-        
-        {/* Modal Container */}
-        <div className="relative bg-white w-full max-w-5xl rounded-[3rem] overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in zoom-in-95 duration-300 max-h-[90vh]">
-            
-            {/* Close Button */}
-            <button onClick={onClose} className="absolute top-6 right-6 z-20 p-3 bg-white/90 hover:bg-white rounded-full text-slate-900 shadow-xl transition-all active:scale-90">
-            <X size={20} />
+            <button
+              onClick={clearFilters}
+              className="px-3 py-1.5 text-slate-600 text-sm font-medium hover:text-slate-900"
+            >
+              Clear All
             </button>
+          </div>
+        )}
+      </div>
 
-            {/* 1. LEFT: Image Gallery (Auto-Sliding) */}
-            <div className="w-full md:w-3/5 h-80 md:h-auto bg-slate-50 relative overflow-hidden group">
-            {product.images?.length > 0 ? (
-                <div className="w-full h-full">
-                <img 
-                    src={product.images[currentImg].image_url} 
-                    className="w-full h-full object-cover transition-all duration-1000 ease-in-out scale-100 group-hover:scale-105" 
-                    alt={`${product.name} view ${currentImg + 1}`} 
-                />
-                
-                {/* Image Navigation Dots */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10">
-                    {product.images.map((_, i) => (
-                    <button 
-                        key={i} 
-                        onClick={() => setCurrentImg(i)}
-                        className={`h-2 transition-all duration-500 rounded-full ${i === currentImg ? "w-8 bg-white" : "w-2 bg-white/40 hover:bg-white/60"}`} 
-                    />
-                    ))}
-                </div>
-                </div>
-            ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-200 bg-slate-50">
-                <ShoppingBag size={80} />
-                </div>
-            )}
-            
-            {/* Veg/Non-Veg Tag on Image */}
-            <div className="absolute top-8 left-8">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl backdrop-blur-md border ${product.veg ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-rose-500/10 border-rose-500/20 text-rose-600'} font-black text-[10px] uppercase tracking-widest`}>
-                <div className={`h-2 w-2 rounded-full ${product.veg ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                {product.veg ? "Pure Veg" : "Non-Veg"}
-                </div>
-            </div>
+      {/* FILTER MODAL */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-40">
+          <div 
+            className="absolute inset-0 bg-black/60" 
+            onClick={() => setFilterOpen(false)} 
+          />
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-black">Filter by Category</h3>
+              <button onClick={() => setFilterOpen(false)}>
+                <X size={24} />
+              </button>
             </div>
 
-            {/* 2. RIGHT: Content & Details */}
-            <div className="w-full md:w-2/5 p-8 md:p-12 overflow-y-auto flex flex-col border-l border-slate-50">
-            
-            <div className="mb-8">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500 mb-2 block">
-                {product.categories?.[0]?.name || "Featured Item"}
+            <div className="space-y-3">
+              {allCategories.map(category => (
+                <button
+                  key={category}
+                  onClick={() => toggleCategory(category)}
+                  className={`w-full p-4 rounded-xl border text-left flex justify-between items-center ${
+                    selectedCategories.includes(category)
+                      ? "border-emerald-500 bg-emerald-50"
+                      : "border-slate-200"
+                  }`}
+                >
+                  <span className="font-medium">{category}</span>
+                  {selectedCategories.includes(category) && (
+                    <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm">✓</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={clearFilters}
+                className="flex-1 py-3 border border-slate-300 rounded-xl font-medium"
+              >
+                Clear All
+              </button>
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PRODUCTS */}
+      <main className="px-6 mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredProducts.length > 0 ? (
+          filteredProducts.map((p) => (
+            <div
+              key={p.id}
+              className="bg-white rounded-2xl border p-4 hover:shadow-lg transition"
+            >
+              {/* IMAGE */}
+              <div className="h-44 bg-slate-100 rounded-xl overflow-hidden">
+                {p.images?.[0] ? (
+                  <img
+                    src={p.images[0].image_url}
+                    className="w-full h-full object-cover"
+                    alt={p.name}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <ShoppingBag />
+                  </div>
+                )}
+              </div>
+
+              {/* NAME */}
+              <h3 className="mt-4 font-black text-lg">{p.name}</h3>
+
+              {/* DESCRIPTION */}
+              <p className="text-sm text-slate-500 line-clamp-2 mt-1">
+                {p.description}
+              </p>
+
+              {/* CATEGORY TAGS */}
+              {p.categories?.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {p.categories.map((cat) => (
+                    <span
+                      key={cat.id}
+                      className="px-3 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-700"
+                    >
+                      {cat.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* PRICE + ADD */}
+              <div className="flex justify-between items-center mt-4">
+                <span className="font-black text-indigo-600 text-lg">
+                  ₹{p.sizes?.[0]?.price || 0}
                 </span>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight mb-2">
-                {product.name}
-                </h2>
-                <p className="text-slate-500 leading-relaxed font-medium text-sm">
-                {product.description || "Crafted with the finest ingredients to ensure an authentic and delightful experience."}
-                </p>
+                <button
+                  onClick={() => setModalItem(p)}
+                  className="px-5 py-2 bg-emerald-100 text-emerald-700 rounded-xl font-bold flex gap-2 items-center"
+                >
+                  <Plus size={16} /> Add
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12">
+            <div className="text-slate-400 mb-4">No items found for selected filters</div>
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-xl font-medium"
+            >
+              Clear Filters
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* ADD ITEM MODAL */}
+      {modalItem && (
+        <AddItemModal
+          item={modalItem}
+          onClose={() => setModalItem(null)}
+          onAdd={cart.addItem}
+        />
+      )}
+
+      {/* CART BAR */}
+      {cart.items.length > 0 && (
+        <>
+          <div
+            onClick={() => setCartOpen(true)}
+            className="fixed bottom-6 right-6 w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-xl cursor-pointer"
+          >
+            <ShoppingBasket className="text-white" />
+            <span className="absolute -top-2 -right-2 bg-white text-emerald-600 w-7 h-7 rounded-full flex items-center justify-center font-bold">
+              {cart.items.reduce((s, i) => s + i.qty, 0)}
+            </span>
+          </div>
+
+          {cartOpen && (
+            <CartModal cart={cart} onClose={() => setCartOpen(false)} />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ================= ADD ITEM MODAL ================= */
+
+function AddItemModal({ item, onClose, onAdd }) {
+  const [size, setSize] = useState(item.sizes?.[0]);
+  const [qty, setQty] = useState(1);
+
+  const total = size.price * qty;
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+
+      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6">
+        <button onClick={onClose} className="absolute top-4 right-4">
+          <X />
+        </button>
+
+        <h2 className="text-2xl font-black">{item.name}</h2>
+
+        <div className="mt-6 space-y-2">
+          {item.sizes.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setSize(s)}
+              className={`w-full p-4 rounded-xl border ${
+                size.id === s.id
+                  ? "border-emerald-500 bg-emerald-50"
+                  : "border-slate-200"
+              }`}
+            >
+              {s.size_label} — ₹{s.price}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex justify-between items-center mt-6">
+          <div className="flex gap-4 items-center">
+            <button onClick={() => setQty(Math.max(1, qty - 1))}>
+              <Minus />
+            </button>
+            <span className="font-bold text-xl">{qty}</span>
+            <button onClick={() => setQty(qty + 1)}>
+              <Plus />
+            </button>
+          </div>
+          <span className="font-black text-xl">₹{total}</span>
+        </div>
+
+        <button
+          onClick={() => {
+            onAdd({
+              productId: item.id,
+              name: item.name,
+              image: item.images?.[0]?.image_url,
+              sizeLabel: size.size_label,
+              price: size.price,
+              qty,
+            });
+            onClose();
+          }}
+          className="mt-6 w-full py-4 bg-emerald-600 text-white rounded-xl font-bold"
+        >
+          Add to Cart — ₹{total}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ================= CART MODAL ================= */
+
+function CartModal({ cart, onClose }) {
+  const total = cart.items.reduce(
+    (s, i) => s + i.price * i.qty,
+    0
+  );
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+
+      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6">
+        <h2 className="text-2xl font-black mb-6">Your Cart</h2>
+
+        {cart.items.map((i) => (
+          <div
+            key={i.productId + i.sizeLabel}
+            className="flex gap-4 mb-6"
+          >
+            <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden">
+              {i.image ? (
+                <img
+                  src={i.image}
+                  className="w-full h-full object-cover"
+                  alt={i.name}
+                />
+              ) : (
+                <ShoppingBag />
+              )}
             </div>
 
-            <div className="space-y-8 flex-1">
-                {/* PRICE DISPLAY */}
-                <div className="flex items-baseline gap-2">
-                <span className="text-sm font-bold text-slate-400">Starting from</span>
-                <span className="text-4xl font-black text-slate-900">₹{getMinPrice(product)}</span>
-                </div>
+            <div className="flex-1">
+              <div className="flex justify-between">
+                <h3 className="font-bold">{i.name}</h3>
+                <span className="font-semibold">
+                  ₹{i.price * i.qty}
+                </span>
+              </div>
 
-                {/* SIZES SECTION */}
-                {product.sizes?.length > 0 && (
-                <div className="animate-in slide-in-from-bottom-4 duration-500">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-                    Select Size <div className="h-px flex-1 bg-slate-100" />
-                    </h4>
-                    <div className="grid grid-cols-1 gap-3">
-                    {product.sizes.map((s, idx) => (
-                        <div 
-                        key={idx} 
-                        className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-colors group"
-                        >
-                        <div className="flex flex-col">
-                            <span className="text-sm font-black text-slate-800">{s.name}</span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Standard Portion</span>
-                        </div>
-                        <span className="text-lg font-black text-indigo-600">₹{s.price}</span>
-                        </div>
-                    ))}
-                    </div>
-                </div>
-                )}
+              <span className="inline-block mt-1 px-3 py-1 bg-slate-100 rounded-full text-xs font-bold">
+                {i.sizeLabel}
+              </span>
 
-                {/* ADDITIONAL TAGS */}
-                <div className="flex flex-wrap gap-2 pt-4">
-                {product.iced && (
-                    <div className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">
-                    <Clock size={12} /> Best Served Cold
-                    </div>
-                )}
-                {product.spicy && (
-                    <div className="flex items-center gap-2 bg-orange-50 text-orange-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">
-                    Spicy
-                    </div>
-                )}
-                </div>
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  onClick={() =>
+                    cart.updateQty(
+                      i.productId,
+                      i.sizeLabel,
+                      i.qty - 1
+                    )
+                  }
+                >
+                  <Minus />
+                </button>
+                <span className="font-bold">{i.qty}</span>
+                <button
+                  onClick={() =>
+                    cart.updateQty(
+                      i.productId,
+                      i.sizeLabel,
+                      i.qty + 1
+                    )
+                  }
+                >
+                  <Plus />
+                </button>
+              </div>
             </div>
+          </div>
+        ))}
 
-            {/* FOOTER INFO */}
-            <div className="mt-12 pt-6 border-t border-slate-100 flex items-center justify-between text-slate-400">
-                <div className="flex items-center gap-2">
-                <ShieldCheck size={16} className="text-emerald-500" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Quality Guaranteed</span>
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest italic">Product ID: #{product.id.toString().slice(-4)}</span>
-            </div>
-            
-            </div>
+        <div className="font-black text-2xl mt-4">
+          Total: ₹{total}
         </div>
-        </div>
-    );
-    }
 
-    // Keep LoadingScreen and NotFound components as they are...
+        <button
+          onClick={cart.clear}
+          className="mt-6 w-full py-4 bg-rose-100 text-rose-700 rounded-xl font-bold"
+        >
+          Clear Cart
+        </button>
+      </div>
+    </div>
+  );
+}
 
-    // Components remain the same...
-    function LoadingScreen() {
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin" />
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Preparing Menu...</p>
-        </div>
-        </div>
-    );
-    }
+/* ================= UTILS ================= */
 
-    function NotFound() {
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center text-center p-6 bg-white">
-        <div className="h-24 w-24 bg-slate-50 rounded-[2rem] flex items-center justify-center mb-6 text-slate-300 border border-slate-100">
-            <Info size={48} />
-        </div>
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Store Not Found</h2>
-        <p className="text-slate-500 max-w-xs mt-3 font-medium">This restaurant link might be expired or the store is currently offline.</p>
-        <a href="/" className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-100">
-            Browse Other Outlets
-        </a>
-        </div>
-    );
-    }
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      Loading…
+    </div>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      Not Found
+    </div>
+  );
+}
