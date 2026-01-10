@@ -31,6 +31,19 @@ export default function RestaurantDashboard() {
     };
   }, [products]);
 
+  const qrFileName = useMemo(() => {
+    if (!selectedRestaurant) return "menu-qr";
+
+    const emailPrefix = selectedRestaurant.email?.split("@")[0];
+    return (
+      emailPrefix ||
+      selectedRestaurant.slug ||
+      selectedRestaurant.name?.replace(/\s+/g, "-").toLowerCase() ||
+      "menu-qr"
+    );
+  }, [selectedRestaurant]);
+
+
   // Construct the Public URL for the QR Code
   const publicUrl = useMemo(() => {
     if (!selectedRestaurant) return "";
@@ -66,7 +79,7 @@ export default function RestaurantDashboard() {
       const url = canvas.toDataURL(`image/${format === 'jpeg' ? 'jpeg' : 'png'}`);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${selectedRestaurant.identifier}-menu-qr.${format}`;
+      link.download = `${qrFileName}-qr.${format}`;
       link.click();
     }
   };
@@ -169,17 +182,24 @@ export default function RestaurantDashboard() {
           <div className="space-y-4 flex flex-col items-center">
             <div ref={qrRef} className="p-6 bg-white rounded-[2.5rem] border-4 border-slate-50 shadow-xl shadow-slate-200/50">
               <QRCodeCanvas
+                key={selectedRestaurant.logo_url}   // 🔥 important
                 value={publicUrl}
-                size={180}
-                level={"H"}
-                includeMargin={false}
-                imageSettings={selectedRestaurant.logo_url ? {
-                  src: selectedRestaurant.logo_url,
-                  height: 40,
-                  width: 40,
-                  excavate: true,
-                } : undefined}
+                size={360}
+                level="H"
+                imageSettings={
+                  selectedRestaurant.logo_url
+                    ? {
+                      src: selectedRestaurant.logo_url,
+                      height: 80,
+                      width: 80,
+                      excavate: true,
+                      crossOrigin: "anonymous"
+                    }
+                    : undefined
+                }
               />
+
+
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Scan to preview</p>
           </div>
