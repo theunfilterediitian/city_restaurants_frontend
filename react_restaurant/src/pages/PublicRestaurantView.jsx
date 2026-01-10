@@ -6,6 +6,8 @@ import {
   Utensils,
   ShoppingBag,
   Clock,
+  CheckCircle, // Add this for open status
+  XCircle, // Add this for closed status
   X,
   Plus,
   Minus,
@@ -159,10 +161,26 @@ export default function PublicRestaurantView() {
       categoryCounts[cat.name]++;
     });
   });
-
-  // Sort categories by count (descending)
-  const allCategories = Object.keys(categoryCounts)
-    .sort((a, b) => categoryCounts[b] - categoryCounts[a])
+ // Calculate category counts based on current veg filter
+ const getFilteredCategoryCount = (categoryName) => {
+  return products.filter(product => {
+    // Apply current veg filter
+    let passesVegFilter = true;
+    if (vegFilter === "veg") {
+      passesVegFilter = product.veg === true;
+    } else if (vegFilter === "nonveg") {
+      passesVegFilter = product.veg === false;
+    }
+    
+    // Check if product belongs to this category
+    const hasCategory = product.categories?.some(cat => cat.name === categoryName);
+    
+    return passesVegFilter && hasCategory;
+  }).length;
+};
+    // Sort categories by count (descending) - use filtered counts for sorting
+    const allCategories = Object.keys(categoryCounts)
+    .sort((a, b) => getFilteredCategoryCount(b) - getFilteredCategoryCount(a))
     .slice(0, 8);
 
   // Filter products based on selected categories AND veg filter
@@ -170,9 +188,9 @@ export default function PublicRestaurantView() {
     // Apply veg filter
     let passesVegFilter = true;
     if (vegFilter === "veg") {
-      passesVegFilter = product.is_vegetarian === true;
+      passesVegFilter = product.veg === true;
     } else if (vegFilter === "nonveg") {
-      passesVegFilter = product.is_vegetarian === false;
+      passesVegFilter = product.veg === false;
     }
 
     // Apply category filter
@@ -198,33 +216,87 @@ export default function PublicRestaurantView() {
     setSelectedCategories([]);
     setVegFilter("all");
   };
-
+  // console.log(p);
   // Count products for each veg type
-  const vegCount = products.filter(p => p.is_vegetarian === true).length;
-  const nonvegCount = products.filter(p => p.is_vegetarian === false).length;
+  const vegCount = products.filter(p => p.veg === true).length;
+  const nonvegCount = products.filter(p => p.veg === false).length;
 
+  // Determine if restaurant is open
+  const isOpen = true; // Replace with actual logic based on restaurant.opening_hours
+  const StatusIcon = isOpen ? CheckCircle : XCircle;
+  const openStatusColor = isOpen ? "text-emerald-600" : "text-rose-600";
+  const openStatusBgColor = isOpen ? "bg-emerald-50" : "bg-rose-50";
+  const openStatusBorderColor = isOpen ? "border-emerald-200" : "border-rose-200";
+  const statusIconColor = isOpen ? "text-emerald-500" : "text-rose-500";
+
+ console.log(products);
   return (
+
     <div className="min-h-screen bg-slate-50 pb-32">
       {/* HEADER */}
-      <header className="bg-white px-6 py-8 border-b">
-        <h1 className="text-4xl font-black">{restaurant.name}</h1>
-        <div className="flex gap-4 mt-2 text-slate-500">
-          <span className="flex gap-1">
-            <Utensils size={16} /> {restaurant.type}
-          </span>
-          <span className="flex gap-1">
-            <MapPin size={16} /> {restaurant.location}
-          </span>
-          <span className="flex gap-1">
-            <Clock size={16} /> Open Now
-          </span>
+      <header className="bg-white px-6 py-6 border-b">
+        {/* LOGO AND NAME ROW */}
+        <div className="flex items-center gap-4 mb-6">
+          {/* LOGO */}
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-100 bg-gradient-to-br from-emerald-50 to-indigo-50 flex items-center justify-center">
+            {restaurant.logo_url ? (
+              <img 
+                src={restaurant.logo_url} 
+                alt={`${restaurant.name} Logo`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-2xl font-black text-emerald-600">
+                {restaurant.name.charAt(0)}
+              </span>
+            )}
+          </div>
+          
+          {/* NAME AND TYPE */}
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">{restaurant.name}</h1>
+            {restaurant.type && (
+              <span className="text-slate-500 text-sm font-medium flex items-center gap-1 mt-1">
+                <Utensils size={14} /> {restaurant.type}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ADDRESS AND STATUS ROW */}
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          {/* ADDRESS */}
+          <div className="flex-1">
+            <div className="flex items-start gap-2">
+              <MapPin size={18} className="text-slate-400 mt-0.5" />
+              <div>
+                <p className="text-slate-700 font-medium">Address</p>
+                <p className="text-slate-600">{restaurant.location}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* STATUS WITH ICON AND TAG */}
+          <div className="flex items-start gap-2">
+            <div className={`p-2 rounded-lg ${openStatusBgColor} border ${openStatusBorderColor}`}>
+              <StatusIcon size={18} className={statusIconColor} />
+            </div>
+            <div>
+              <p className="text-slate-700 font-medium text-sm">Status</p>
+              <div className="flex items-center gap-2">
+                {/* <div className={`w-2 h-2 rounded-full ${isOpen ? 'bg-emerald-500' : 'bg-rose-500'}`}></div> */}
+                <span className={`font-bold ${openStatusColor}`}>
+                  {isOpen ? "Open" : "Closed"}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
-
       {/* VEG/NON-VEG FILTER */}
       <div className="px-6 mt-6">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-2xl font-black">Menu</h2>
+          
           {(selectedCategories.length > 0 || vegFilter !== "all") && (
             <button
               onClick={clearFilters}
@@ -294,7 +366,9 @@ export default function PublicRestaurantView() {
             </span>
           </button>
         </div>
-
+        <h2 className="text-2xl font-black">Menu</h2>
+        {/* <hr style={{width:"30%"}} /> */}
+        <br />
         {/* HORIZONTAL CATEGORY FILTER */}
         <div className="mb-4">
           {/* Category Filter Bar */}
@@ -314,7 +388,7 @@ export default function PublicRestaurantView() {
             {allCategories.map(category => {
               const Icon = getCategoryIcon(category);
               const isSelected = selectedCategories.includes(category);
-              const itemCount = categoryCounts[category];
+              const itemCount = getFilteredCategoryCount(category);
 
               return (
                 <button
@@ -395,7 +469,7 @@ export default function PublicRestaurantView() {
           )}
         </div>
       </div>
-
+      
       {/* PRODUCTS */}
       <main className="px-6 mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.length > 0 ? (
@@ -421,13 +495,13 @@ export default function PublicRestaurantView() {
                 </div>
                 
                 {/* Veg/Non-Veg Dot Indicator */}
-                {p.is_vegetarian !== undefined && (
+                {p.veg !== undefined && (
                   <div className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center ${
-                    p.is_vegetarian 
+                    p.veg 
                       ? "bg-green-100 border-2 border-green-500" 
                       : "bg-red-100 border-2 border-red-500"
                   }`}>
-                    {p.is_vegetarian ? (
+                    {p.veg ? (
                       <Leaf size={16} className="text-green-600" />
                     ) : (
                       <Beef size={16} className="text-red-600" />
@@ -461,18 +535,22 @@ export default function PublicRestaurantView() {
               {/* PRICE + ADD */}
               <div className="flex justify-between items-center mt-4">
                 <div className="flex items-center gap-2">
+                {p.sizes?.[0]?.size_label && (
+                    <span className={`text-xs px-3 py-1 rounded-full font-bold ${
+                      p.sizes[0].size_label.toLowerCase().includes('half') 
+                        ? "bg-blue-100 text-teal-700" 
+                        : p.sizes[0].size_label.toLowerCase().includes('full')
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-purple-100 text-purple-700"
+                    }`}>
+                      {p.sizes[0].size_label}
+                    </span>
+                  )}
+                  
                   <span className="font-black text-indigo-600 text-lg">
                     ₹{p.sizes?.[0]?.price || 0}
                   </span>
-                  {p.is_vegetarian !== undefined && (
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      p.is_vegetarian 
-                        ? "bg-green-100 text-green-700" 
-                        : "bg-red-100 text-red-700"
-                    }`}>
-                      {p.is_vegetarian ? "Veg" : "Non-Veg"}
-                    </span>
-                  )}
+                  
                 </div>
                 <button
                   onClick={() => setModalItem(p)}
@@ -547,13 +625,13 @@ function AddItemModal({ item, onClose, onAdd }) {
         {/* MODAL HEADER WITH VEG/NON-VEG INDICATOR */}
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-black">{item.name}</h2>
-          {item.is_vegetarian !== undefined && (
+          {item.veg !== undefined && (
             <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
-              item.is_vegetarian 
+              item.veg 
                 ? "bg-green-100 text-green-700" 
                 : "bg-red-100 text-red-700"
             }`}>
-              {item.is_vegetarian ? (
+              {item.veg ? (
                 <>
                   <Leaf size={14} />
                   Vegetarian
