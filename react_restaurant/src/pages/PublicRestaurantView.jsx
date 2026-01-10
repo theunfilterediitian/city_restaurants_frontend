@@ -10,7 +10,17 @@ import {
   Plus,
   Minus,
   ShoppingBasket,
-  Filter,
+  IceCream,
+  Coffee,
+  Pizza,
+  Drumstick,
+  Salad,
+  GlassWater,
+  CupSoda,
+  Sandwich,
+  ChefHat,
+  Leaf,
+  Beef,
 } from "lucide-react";
 
 /* ================= CART STATE ================= */
@@ -52,6 +62,61 @@ function useCartState() {
   return { items, addItem, updateQty, clear };
 }
 
+/* ================= CATEGORY ICON MAPPING ================= */
+
+const CATEGORY_ICONS = {
+  dessert: IceCream,
+  sweets: IceCream,
+  icecream: IceCream,
+  cake: IceCream,
+  drinks: Coffee,
+  beverage: Coffee,
+  coffee: Coffee,
+  tea: Coffee,
+  main: Pizza,
+  "main course": Pizza,
+  mains: Pizza,
+  starter: Drumstick,
+  appetizer: Drumstick,
+  "side dish": Salad,
+  sides: Salad,
+  salad: Salad,
+  soup: Salad,
+  juice: GlassWater,
+  smoothie: GlassWater,
+  shake: CupSoda,
+  mocktail: CupSoda,
+  fastfood: Sandwich,
+  burger: Sandwich,
+  sandwich: Sandwich,
+  special: ChefHat,
+  signature: ChefHat,
+  recommended: ChefHat,
+};
+
+const DEFAULT_ICON = ChefHat;
+
+function getCategoryIcon(categoryName) {
+  const lowerName = categoryName.toLowerCase();
+  
+  for (const [key, icon] of Object.entries(CATEGORY_ICONS)) {
+    if (lowerName.includes(key) || lowerName === key) {
+      return icon;
+    }
+  }
+  
+  if (lowerName.includes('dessert') || lowerName.includes('sweet')) return IceCream;
+  if (lowerName.includes('drink') || lowerName.includes('beverage') || lowerName.includes('coffee') || lowerName.includes('tea')) return Coffee;
+  if (lowerName.includes('main') || lowerName.includes('meal')) return Pizza;
+  if (lowerName.includes('starter') || lowerName.includes('appetizer')) return Drumstick;
+  if (lowerName.includes('side') || lowerName.includes('salad') || lowerName.includes('soup')) return Salad;
+  if (lowerName.includes('juice') || lowerName.includes('smoothie')) return GlassWater;
+  if (lowerName.includes('shake') || lowerName.includes('mocktail')) return CupSoda;
+  if (lowerName.includes('fast') || lowerName.includes('burger') || lowerName.includes('sandwich')) return Sandwich;
+  
+  return DEFAULT_ICON;
+}
+
 /* ================= MAIN PAGE ================= */
 
 export default function PublicRestaurantView() {
@@ -60,8 +125,8 @@ export default function PublicRestaurantView() {
   const [loading, setLoading] = useState(true);
   const [modalItem, setModalItem] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [vegFilter, setVegFilter] = useState("all"); // "all", "veg", "nonveg"
   
   const cart = useCartState();
 
@@ -84,23 +149,42 @@ export default function PublicRestaurantView() {
 
   const { restaurant, products } = data;
 
-  // Extract all unique categories from products
-  const allCategories = Array.from(
-    new Set(
-      products.flatMap(p => 
-        p.categories?.map(cat => cat.name) || []
-      )
-    )
-  ).sort();
+  // Extract all unique categories from products with counts
+  const categoryCounts = {};
+  products.forEach(product => {
+    product.categories?.forEach(cat => {
+      if (!categoryCounts[cat.name]) {
+        categoryCounts[cat.name] = 0;
+      }
+      categoryCounts[cat.name]++;
+    });
+  });
 
-  // Filter products based on selected categories
-  const filteredProducts = selectedCategories.length > 0
-    ? products.filter(product =>
-        product.categories?.some(cat => 
-          selectedCategories.includes(cat.name)
-        )
-      )
-    : products;
+  // Sort categories by count (descending)
+  const allCategories = Object.keys(categoryCounts)
+    .sort((a, b) => categoryCounts[b] - categoryCounts[a])
+    .slice(0, 8);
+
+  // Filter products based on selected categories AND veg filter
+  const filteredProducts = products.filter(product => {
+    // Apply veg filter
+    let passesVegFilter = true;
+    if (vegFilter === "veg") {
+      passesVegFilter = product.is_vegetarian === true;
+    } else if (vegFilter === "nonveg") {
+      passesVegFilter = product.is_vegetarian === false;
+    }
+
+    // Apply category filter
+    let passesCategoryFilter = true;
+    if (selectedCategories.length > 0) {
+      passesCategoryFilter = product.categories?.some(cat => 
+        selectedCategories.includes(cat.name)
+      );
+    }
+
+    return passesVegFilter && passesCategoryFilter;
+  });
 
   const toggleCategory = (categoryName) => {
     setSelectedCategories(prev =>
@@ -112,8 +196,12 @@ export default function PublicRestaurantView() {
 
   const clearFilters = () => {
     setSelectedCategories([]);
-    setFilterOpen(false);
+    setVegFilter("all");
   };
+
+  // Count products for each veg type
+  const vegCount = products.filter(p => p.is_vegetarian === true).length;
+  const nonvegCount = products.filter(p => p.is_vegetarian === false).length;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-32">
@@ -133,129 +221,222 @@ export default function PublicRestaurantView() {
         </div>
       </header>
 
-      {/* FILTER BAR */}
+      {/* VEG/NON-VEG FILTER */}
       <div className="px-6 mt-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-2">
           <h2 className="text-2xl font-black">Menu</h2>
+          {(selectedCategories.length > 0 || vegFilter !== "all") && (
+            <button
+              onClick={clearFilters}
+              className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        {/* Veg/Non-Veg Toggle */}
+        <div className="flex gap-2 mb-4">
           <button
-            onClick={() => setFilterOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border rounded-xl font-medium"
+            onClick={() => setVegFilter("all")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+              vegFilter === "all"
+                ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+            }`}
           >
-            <Filter size={16} />
-            Filter
-            {selectedCategories.length > 0 && (
-              <span className="bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
-                {selectedCategories.length}
-              </span>
-            )}
+            <ChefHat size={18} />
+            <span className="font-medium">All</span>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+              vegFilter === "all"
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-slate-100 text-slate-600"
+            }`}>
+              {products.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setVegFilter("veg")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+              vegFilter === "veg"
+                ? "border-green-500 bg-green-50 text-green-700"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+            }`}
+          >
+            <Leaf size={18} className="text-green-600" />
+            <span className="font-medium">Veg</span>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+              vegFilter === "veg"
+                ? "bg-green-100 text-green-700"
+                : "bg-slate-100 text-slate-600"
+            }`}>
+              {vegCount}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setVegFilter("nonveg")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+              vegFilter === "nonveg"
+                ? "border-red-500 bg-red-50 text-red-700"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+            }`}
+          >
+            <Beef size={18} className="text-red-600" />
+            <span className="font-medium">Non-Veg</span>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+              vegFilter === "nonveg"
+                ? "bg-red-100 text-red-700"
+                : "bg-slate-100 text-slate-600"
+            }`}>
+              {nonvegCount}
+            </span>
           </button>
         </div>
 
-        {/* Selected Categories Pills */}
-        {selectedCategories.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {selectedCategories.map(cat => (
-              <span
-                key={cat}
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium"
-              >
-                {cat}
-                <button
-                  onClick={() => toggleCategory(cat)}
-                  className="hover:text-emerald-900"
-                >
-                  <X size={14} />
-                </button>
-              </span>
-            ))}
+        {/* HORIZONTAL CATEGORY FILTER */}
+        <div className="mb-4">
+          {/* Category Filter Bar */}
+          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
             <button
-              onClick={clearFilters}
-              className="px-3 py-1.5 text-slate-600 text-sm font-medium hover:text-slate-900"
+              onClick={() => setSelectedCategories([])}
+              className={`flex flex-col items-center justify-center min-w-[80px] px-4 py-3 rounded-2xl border-2 transition-all ${
+                selectedCategories.length === 0
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+              }`}
             >
-              Clear All
+              <ChefHat size={24} />
+              <span className="mt-2 text-xs font-bold">All</span>
             </button>
-          </div>
-        )}
-      </div>
 
-      {/* FILTER MODAL */}
-      {filterOpen && (
-        <div className="fixed inset-0 z-40">
-          <div 
-            className="absolute inset-0 bg-black/60" 
-            onClick={() => setFilterOpen(false)} 
-          />
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-black">Filter by Category</h3>
-              <button onClick={() => setFilterOpen(false)}>
-                <X size={24} />
-              </button>
-            </div>
+            {allCategories.map(category => {
+              const Icon = getCategoryIcon(category);
+              const isSelected = selectedCategories.includes(category);
+              const itemCount = categoryCounts[category];
 
-            <div className="space-y-3">
-              {allCategories.map(category => (
+              return (
                 <button
                   key={category}
                   onClick={() => toggleCategory(category)}
-                  className={`w-full p-4 rounded-xl border text-left flex justify-between items-center ${
-                    selectedCategories.includes(category)
-                      ? "border-emerald-500 bg-emerald-50"
-                      : "border-slate-200"
+                  className={`flex flex-col items-center justify-center min-w-[80px] px-4 py-3 rounded-2xl border-2 transition-all relative ${
+                    isSelected
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                   }`}
                 >
-                  <span className="font-medium">{category}</span>
-                  {selectedCategories.includes(category) && (
-                    <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm">✓</span>
-                    </div>
-                  )}
+                  <Icon size={24} />
+                  <span className="mt-2 text-xs font-bold text-center truncate max-w-full">
+                    {category}
+                  </span>
+                  <span className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    isSelected 
+                      ? "bg-emerald-500 text-white" 
+                      : "bg-slate-100 text-slate-600"
+                  }`}>
+                    {itemCount}
+                  </span>
                 </button>
-              ))}
-            </div>
-
-            <div className="flex gap-3 mt-8">
-              <button
-                onClick={clearFilters}
-                className="flex-1 py-3 border border-slate-300 rounded-xl font-medium"
-              >
-                Clear All
-              </button>
-              <button
-                onClick={() => setFilterOpen(false)}
-                className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium"
-              >
-                Apply Filters
-              </button>
-            </div>
+              );
+            })}
           </div>
+
+          {/* Selected Filters Indicator */}
+          {(selectedCategories.length > 0 || vegFilter !== "all") && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
+              <span className="font-medium">Filters:</span>
+              <div className="flex flex-wrap gap-2">
+                {/* Veg/Non-Veg Filter Badge */}
+                {vegFilter !== "all" && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium capitalize"
+                    style={{
+                      backgroundColor: vegFilter === "veg" ? '#dcfce7' : '#fee2e2',
+                      color: vegFilter === "veg" ? '#166534' : '#991b1b'
+                    }}
+                  >
+                    {vegFilter === "veg" ? (
+                      <>
+                        <Leaf size={12} />
+                        Veg
+                      </>
+                    ) : (
+                      <>
+                        <Beef size={12} />
+                        Non-Veg
+                      </>
+                    )}
+                    <button
+                      onClick={() => setVegFilter("all")}
+                      className="ml-1 hover:opacity-70"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                )}
+
+                {/* Category Filter Badges */}
+                {selectedCategories.map(cat => (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium"
+                  >
+                    {cat}
+                    <button
+                      onClick={() => toggleCategory(cat)}
+                      className="hover:text-emerald-900"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* PRODUCTS */}
-      <main className="px-6 mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <main className="px-6 mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((p) => (
             <div
               key={p.id}
               className="bg-white rounded-2xl border p-4 hover:shadow-lg transition"
             >
-              {/* IMAGE */}
-              <div className="h-44 bg-slate-100 rounded-xl overflow-hidden">
-                {p.images?.[0] ? (
-                  <img
-                    src={p.images[0].image_url}
-                    className="w-full h-full object-cover"
-                    alt={p.name}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <ShoppingBag />
+              {/* PRODUCT IMAGE WITH VEG/NON-VEG INDICATOR */}
+              <div className="relative">
+                <div className="h-44 bg-slate-100 rounded-xl overflow-hidden">
+                  {p.images?.[0] ? (
+                    <img
+                      src={p.images[0].image_url}
+                      className="w-full h-full object-cover"
+                      alt={p.name}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <ShoppingBag />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Veg/Non-Veg Dot Indicator */}
+                {p.is_vegetarian !== undefined && (
+                  <div className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center ${
+                    p.is_vegetarian 
+                      ? "bg-green-100 border-2 border-green-500" 
+                      : "bg-red-100 border-2 border-red-500"
+                  }`}>
+                    {p.is_vegetarian ? (
+                      <Leaf size={16} className="text-green-600" />
+                    ) : (
+                      <Beef size={16} className="text-red-600" />
+                    )}
                   </div>
                 )}
               </div>
 
-              {/* NAME */}
+              {/* PRODUCT NAME */}
               <h3 className="mt-4 font-black text-lg">{p.name}</h3>
 
               {/* DESCRIPTION */}
@@ -279,9 +460,20 @@ export default function PublicRestaurantView() {
 
               {/* PRICE + ADD */}
               <div className="flex justify-between items-center mt-4">
-                <span className="font-black text-indigo-600 text-lg">
-                  ₹{p.sizes?.[0]?.price || 0}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-indigo-600 text-lg">
+                    ₹{p.sizes?.[0]?.price || 0}
+                  </span>
+                  {p.is_vegetarian !== undefined && (
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      p.is_vegetarian 
+                        ? "bg-green-100 text-green-700" 
+                        : "bg-red-100 text-red-700"
+                    }`}>
+                      {p.is_vegetarian ? "Veg" : "Non-Veg"}
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => setModalItem(p)}
                   className="px-5 py-2 bg-emerald-100 text-emerald-700 rounded-xl font-bold flex gap-2 items-center"
@@ -298,7 +490,7 @@ export default function PublicRestaurantView() {
               onClick={clearFilters}
               className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-xl font-medium"
             >
-              Clear Filters
+              Show All Items
             </button>
           </div>
         )}
@@ -352,7 +544,29 @@ function AddItemModal({ item, onClose, onAdd }) {
           <X />
         </button>
 
-        <h2 className="text-2xl font-black">{item.name}</h2>
+        {/* MODAL HEADER WITH VEG/NON-VEG INDICATOR */}
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-black">{item.name}</h2>
+          {item.is_vegetarian !== undefined && (
+            <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+              item.is_vegetarian 
+                ? "bg-green-100 text-green-700" 
+                : "bg-red-100 text-red-700"
+            }`}>
+              {item.is_vegetarian ? (
+                <>
+                  <Leaf size={14} />
+                  Vegetarian
+                </>
+              ) : (
+                <>
+                  <Beef size={14} />
+                  Non-Vegetarian
+                </>
+              )}
+            </span>
+          )}
+        </div>
 
         <div className="mt-6 space-y-2">
           {item.sizes.map((s) => (
