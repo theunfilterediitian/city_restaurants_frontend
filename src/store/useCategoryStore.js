@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { api } from '../services/api'; // Fixed import
+import { api } from '../services/api';
 
 export const useCategoryStore = create((set) => ({
   categories: [],
@@ -10,6 +10,7 @@ export const useCategoryStore = create((set) => ({
     try {
       const res = await api.getCategories();
       set({ categories: res.data });
+      console.log(res.data);
     } finally {
       set({ isLoading: false });
     }
@@ -17,20 +18,22 @@ export const useCategoryStore = create((set) => ({
 
   createCategory: async (data) => {
     await api.createCategory(data);
-    const res = await api.getCategories(); // Refresh list
+    const res = await api.getCategories();
     set({ categories: res.data });
+    console.log(res.data);
   },
 
-  // ADD THIS ACTION
   deleteCategory: async (categoryId) => {
     if (!window.confirm("Are you sure? This will remove the category from all products.")) return;
-    
+
     try {
       await api.deleteCategory(categoryId);
-      // Filter out the deleted category from state immediately
+
+      // ✅ FIXED VARIABLE NAME
       set((state) => ({
-        categories: state.categories.filter((c) => c.id !== category_id)
+        categories: state.categories.filter((c) => c.id !== categoryId)
       }));
+
     } catch (error) {
       console.error("Failed to delete category:", error);
       alert("Only admins can delete categories.");
