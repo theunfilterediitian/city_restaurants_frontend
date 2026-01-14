@@ -58,6 +58,9 @@ export const api = {
   createCategory: (data) =>
     apiClient.post('/api/v1/categories/', data),
 
+  deleteCategory: (categoryId) =>
+    apiClient.delete(`/api/v1/categories/${categoryId}`),
+
   // =========================
   // Product Endpoints
   // =========================
@@ -75,6 +78,9 @@ export const api = {
 
   deleteProductImage: (imageId) =>
     apiClient.delete(`/api/v1/products/images/${imageId}`),
+
+  deleteProduct: (productId) =>
+    apiClient.delete(`/api/v1/products/${productId}`),
 
 
 
