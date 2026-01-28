@@ -147,8 +147,18 @@ export default function AddProduct() {
         try {
             const data = new FormData();
 
+            // Clean up sizes and ensure price is a number
+            const cleanedFormData = {
+                ...formData,
+                sizes: formData.sizes
+                    .filter(s => s.size_label.trim() !== "" && s.price !== "")
+                    .map(s => ({ ...s, price: parseFloat(s.price) }))
+            };
+
             // Backend expects "product" as a JSON string
-            data.append("product", JSON.stringify(formData));
+            data.append("product", JSON.stringify(cleanedFormData));
+
+
 
             // Backend expects "images" as a list of files
             selectedFiles.forEach((file) => {
