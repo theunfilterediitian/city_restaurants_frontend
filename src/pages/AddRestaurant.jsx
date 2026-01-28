@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../services/api";
 import { ArrowLeft, Save, Building2, AlertCircle, MapPin, Globe, Camera, X } from "lucide-react";
-import { Country, State, City } from 'country-state-city';
+
 
 export default function AddRestaurant() {
   const { id } = useParams();
@@ -14,9 +14,23 @@ export default function AddRestaurant() {
   const [fetching, setFetching] = useState(isEditMode);
   const [error, setError] = useState("");
   const [isCustomType, setIsCustomType] = useState(false);
-  
-  // Image Preview State
-  const [logoPreview, setLogoPreview] = useState(null);
+
+  // --- Dynamic Import for country-state-city ---
+  const [csc, setCsc] = useState(null);
+  const [countries, setCountries] = useState([]);
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
+
+  useEffect(() => {
+    import('country-state-city').then((mod) => {
+      setCsc(mod);
+      setCountries(mod.Country.getAllCountries());
+      // If we're not in edit mode, set default states for India
+      if (!isEditMode) {
+        setStates(mod.State.getStatesOfCountry("IN"));
+      }
+    });
+  }, []);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -31,31 +45,33 @@ export default function AddRestaurant() {
     logo: null // For the File object
   });
 
-  const [countries] = useState(Country.getAllCountries());
-  const [states, setStates] = useState([]);
-  const [cities, setCities] = useState([]);
+  const [logoPreview, setLogoPreview] = useState(null);
+
 
 
 
   // --- Helpers ---
   const generateLocationString = (cCode, sCode, cityName) => {
-    const countryName = Country.getCountryByCode(cCode)?.name || "";
-    const stateName = State.getStateByCodeAndCountry(sCode, cCode)?.name || "";
+    if (!csc) return "";
+    const countryName = csc.Country.getCountryByCode(cCode)?.name || "";
+    const stateName = csc.State.getStateByCodeAndCountry(sCode, cCode)?.name || "";
     const parts = [cityName, stateName, countryName].filter(Boolean);
     return parts.join(", ");
   };
 
 
 
+
   // --- Effects ---
   useEffect(() => {
-     
+    if (!csc) return;
+
     if (isEditMode) {
       const loadRestaurantData = async () => {
         try {
           const res = await api.getRestaurantById(id);
           const data = res.data;
-          
+
           setFormData({
             ...data,
             password: "",
@@ -69,9 +85,9 @@ export default function AddRestaurant() {
           if (!defaults.includes(data.type)) setIsCustomType(true);
 
           if (data.country_code) {
-            setStates(State.getStatesOfCountry(data.country_code));
+            setStates(csc.State.getStatesOfCountry(data.country_code));
             if (data.state_code) {
-              setCities(City.getCitiesOfState(data.country_code, data.state_code));
+              setCities(csc.City.getCitiesOfState(data.country_code, data.state_code));
             }
           }
         } catch (err) {
@@ -82,9 +98,10 @@ export default function AddRestaurant() {
       };
       loadRestaurantData();
     } else {
-      setStates(State.getStatesOfCountry("IN"));
+      setStates(csc.State.getStatesOfCountry("IN"));
     }
-  }, [id, isEditMode]);
+  }, [id, isEditMode, csc]);
+
 
   // --- Handlers ---
   const handleLogoChange = (e) => {
@@ -99,7 +116,9 @@ export default function AddRestaurant() {
     const code = e.target.value;
     const locString = generateLocationString(code, "", "");
     setFormData({ ...formData, country_code: code, state_code: "", city_code: "", location: locString });
-    setStates(State.getStatesOfCountry(code));
+    if (csc) {
+      setStates(csc.State.getStatesOfCountry(code));
+    }
     setCities([]);
   };
 
@@ -107,7 +126,9 @@ export default function AddRestaurant() {
     const code = e.target.value;
     const locString = generateLocationString(formData.country_code, code, "");
     setFormData({ ...formData, state_code: code, city_code: "", location: locString });
-    setCities(City.getCitiesOfState(formData.country_code, code));
+    if (csc) {
+      setCities(csc.City.getCitiesOfState(formData.country_code, code));
+    }
   };
 
   const handleCityChange = (e) => {
@@ -116,20 +137,21 @@ export default function AddRestaurant() {
     setFormData({ ...formData, city_code: name, location: locString });
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
+
     try {
       // Use FormData because we are sending a File (logo)
       const data = new FormData();
       data.append("name", formData.name);
       data.append("email", formData.email);
-      
+
       // Only append password if it's filled (important for Edit Mode)
       if (formData.password) data.append("password", formData.password);
-      
+
       data.append("country_code", formData.country_code);
       data.append("state_code", formData.state_code);
       data.append("city_code", formData.city_code);
@@ -140,7 +162,7 @@ export default function AddRestaurant() {
       if (formData.logo) {
         data.append("logo", formData.logo);
       }
-      
+
       if (isEditMode) {
         await api.updateRestaurant(id, data);
       } else {
@@ -158,7 +180,7 @@ export default function AddRestaurant() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <button 
+      <button
         onClick={() => navigate(-1)}
         className="flex items-center text-gray-500 hover:text-indigo-600 mb-6 transition font-medium"
       >
@@ -220,7 +242,7 @@ export default function AddRestaurant() {
                     type="text"
                     className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
                 <div>
@@ -230,7 +252,7 @@ export default function AddRestaurant() {
                     type="email"
                     className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
                 <div>
@@ -243,7 +265,7 @@ export default function AddRestaurant() {
                     placeholder={isEditMode ? "••••••••" : "Min. 6 chars"}
                     className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                     value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
                 </div>
               </div>
@@ -257,7 +279,7 @@ export default function AddRestaurant() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Type*</label>
-                  <select 
+                  <select
                     className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white transition"
                     onChange={(e) => {
                       if (e.target.value === "Others") {
@@ -283,14 +305,14 @@ export default function AddRestaurant() {
                       placeholder="Specify type..."
                       className="w-full mt-2 px-4 py-2 border border-indigo-200 bg-indigo-50/30 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                       value={formData.type}
-                      onChange={(e) => setFormData({...formData, type: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                     />
                   )}
                 </div>
 
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">Location Details*</label>
-                  <select 
+                  <select
                     required className="w-full px-4 py-2 border rounded-lg text-sm"
                     value={formData.country_code} onChange={handleCountryChange}
                   >
@@ -298,7 +320,7 @@ export default function AddRestaurant() {
                     {countries.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
                   </select>
 
-                  <select 
+                  <select
                     required className="w-full px-4 py-2 border rounded-lg text-sm disabled:bg-gray-100"
                     value={formData.state_code} onChange={handleStateChange} disabled={!states.length}
                   >
@@ -306,7 +328,7 @@ export default function AddRestaurant() {
                     {states.map(s => <option key={s.isoCode} value={s.isoCode}>{s.name}</option>)}
                   </select>
 
-                  <select 
+                  <select
                     required className="w-full px-4 py-2 border rounded-lg text-sm disabled:bg-gray-100"
                     value={formData.city_code} onChange={handleCityChange} disabled={!cities.length}
                   >
@@ -325,10 +347,10 @@ export default function AddRestaurant() {
                 <div className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${formData.pure_veg ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100'}`}>
                   <input
                     type="checkbox" id="pure_veg" className="w-5 h-5 text-green-600 border-gray-300 rounded"
-                    checked={formData.pure_veg} onChange={(e) => setFormData({...formData, pure_veg: e.target.checked})}
+                    checked={formData.pure_veg} onChange={(e) => setFormData({ ...formData, pure_veg: e.target.checked })}
                   />
                   <label htmlFor="pure_veg" className={`text-sm font-bold cursor-pointer ${formData.pure_veg ? 'text-green-700' : 'text-gray-500'}`}>
-                     Pure Veg Outlet
+                    Pure Veg Outlet
                   </label>
                 </div>
               </div>
@@ -341,9 +363,8 @@ export default function AddRestaurant() {
             </p>
             <button
               type="submit" disabled={loading}
-              className={`flex items-center gap-2 text-white px-10 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 disabled:opacity-70 ${
-                isEditMode ? "bg-amber-600 hover:bg-amber-700 shadow-amber-200" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
-              }`}
+              className={`flex items-center gap-2 text-white px-10 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 disabled:opacity-70 ${isEditMode ? "bg-amber-600 hover:bg-amber-700 shadow-amber-200" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
+                }`}
             >
               {loading ? "Processing..." : (
                 <><Save size={18} /> {isEditMode ? "Update Restaurant" : "Register Restaurant"}</>

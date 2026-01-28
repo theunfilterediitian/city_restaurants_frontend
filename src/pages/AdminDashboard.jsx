@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../services/api";
-import { Country, State } from "country-state-city";
-import { 
-  Building2, Users, Globe, ShieldCheck, 
+
+import {
+  Building2, Users, Globe, ShieldCheck,
   ChevronRight, MapPin, Utensils, Activity,
   PieChart, LayoutGrid, PlusCircle
 } from "lucide-react";
@@ -40,14 +40,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 antialiased pb-20">
-      
+
       {/* 1. ADMIN HEADER */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Global Overview</h1>
           <p className="text-slate-500 font-medium">Platform Management & Restaurant Analytics</p>
         </div>
-     
+
       </header>
 
       {/* 2. PLATFORM STATS GRID */}
@@ -61,23 +61,23 @@ export default function AdminDashboard() {
       {/* 3. GEOGRAPHICAL REACH (Visual Breakdown) */}
       <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3 mb-8">
-           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
-              <PieChart size={20} />
-           </div>
-           <h3 className="text-xl font-black text-slate-900">Platform Composition</h3>
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+            <PieChart size={20} />
+          </div>
+          <h3 className="text-xl font-black text-slate-900">Platform Composition</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <ProgressItem 
-            label="Pure Veg vs Non-Veg Ratio" 
-            value={adminStats.pureVegOutlets} 
-            total={adminStats.totalOutlets} 
-            color="bg-emerald-500" 
+          <ProgressItem
+            label="Pure Veg vs Non-Veg Ratio"
+            value={adminStats.pureVegOutlets}
+            total={adminStats.totalOutlets}
+            color="bg-emerald-500"
           />
-          <ProgressItem 
-            label="Multi-City Presence" 
-            value={adminStats.uniqueCities} 
-            total={adminStats.totalOutlets} 
-            color="bg-indigo-500" 
+          <ProgressItem
+            label="Multi-City Presence"
+            value={adminStats.uniqueCities}
+            total={adminStats.totalOutlets}
+            color="bg-indigo-500"
           />
         </div>
       </div>
@@ -85,14 +85,14 @@ export default function AdminDashboard() {
       {/* 4. RESTAURANT DIRECTORY GRID */}
       <section className="space-y-6">
         <div className="flex items-center gap-3">
-           <LayoutGrid size={20} className="text-slate-400" />
-           <h3 className="text-xl font-black text-slate-900">Registered Outlets</h3>
+          <LayoutGrid size={20} className="text-slate-400" />
+          <h3 className="text-xl font-black text-slate-900">Registered Outlets</h3>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {restaurants.map((res) => (
-            <Link 
-              key={res.id} 
+            <Link
+              key={res.id}
               to={`/${res.country_code}/${res.state_code}/${res.city_code}/${res.email.split('@')[0]}`}
               className="bg-white group p-6 rounded-[2rem] border border-slate-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-50/50 transition-all duration-500 relative overflow-hidden"
             >
@@ -122,10 +122,10 @@ export default function AdminDashboard() {
                   {res.city_code}, {res.state_code}
                 </div>
                 <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                      <Utensils size={12} /> View Digital Menu
-                   </div>
-                   <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+                  <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                    <Utensils size={12} /> View Digital Menu
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </Link>

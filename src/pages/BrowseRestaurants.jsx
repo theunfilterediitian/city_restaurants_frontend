@@ -1,9 +1,8 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { api } from "../services/api";
-import { Country, State, City } from "country-state-city";
-import { 
-  MapPin, Utensils, Globe, ChevronRight, 
+import {
+  MapPin, Utensils, Globe, ChevronRight,
   Search, Star, Clock, ChefHat, Filter,
   Navigation, Heart, TrendingUp, X
 } from "lucide-react";
@@ -16,9 +15,18 @@ export default function BrowseRestaurants() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("default");
-  
+
   const filtersRef = useRef(null);
   const filterButtonRef = useRef(null);
+
+  // --- Dynamic Import for country-state-city ---
+  const [csc, setCsc] = useState(null);
+
+  useEffect(() => {
+    import('country-state-city').then((mod) => {
+      setCsc(mod);
+    });
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -41,7 +49,7 @@ export default function BrowseRestaurants() {
       if (filterButtonRef.current && filterButtonRef.current.contains(event.target)) {
         return;
       }
-      
+
       // Close if clicking outside the filters panel and button
       if (filtersRef.current && !filtersRef.current.contains(event.target) && showFilters) {
         setShowFilters(false);
@@ -57,24 +65,31 @@ export default function BrowseRestaurants() {
 
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscapeKey);
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [showFilters]);
 
-  const getCountryName = (code) => Country.getCountryByCode(code)?.name || code;
-  const getStateName = (sCode, cCode) => State.getStateByCodeAndCountry(sCode, cCode)?.name || sCode;
+  const getCountryName = (code) => {
+    if (!csc) return code;
+    return csc.Country.getCountryByCode(code)?.name || code;
+  };
+
+  const getStateName = (sCode, cCode) => {
+    if (!csc) return sCode;
+    return csc.State.getStateByCodeAndCountry(sCode, cCode)?.name || sCode;
+  };
 
   const locationData = useMemo(() => {
     const countries = [...new Set(restaurants.map(r => r.country_code).filter(Boolean))];
-    
+
     const states = restaurants
       .filter(r => !urlCountry || r.country_code === urlCountry)
       .map(r => r.state_code)
       .filter(Boolean);
-    
+
     const cities = restaurants
       .filter(r => (!urlCountry || r.country_code === urlCountry) && (!urlState || r.state_code === urlState))
       .map(r => r.city_code)
@@ -92,13 +107,13 @@ export default function BrowseRestaurants() {
       const matchCountry = !urlCountry || r.country_code === urlCountry;
       const matchState = !urlState || r.state_code === urlState;
       const matchCity = !urlCity || r.city_code === urlCity;
-      const matchSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          r.location?.toLowerCase().includes(searchQuery.toLowerCase());
-      
+      const matchSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.location?.toLowerCase().includes(searchQuery.toLowerCase());
+
       return matchCountry && matchState && matchCity && matchSearch;
     });
 
-    switch(sortBy) {
+    switch (sortBy) {
       case "rating":
         filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
@@ -124,7 +139,6 @@ export default function BrowseRestaurants() {
       if (type === 'state') navigate(`/${urlCountry}/${value}`);
       if (type === 'city') navigate(`/${urlCountry}/${urlState}/${value}`);
     }
-    // REMOVED: setShowFilters(false); // Don't close after selection
   };
 
   const clearFilters = () => {
@@ -134,17 +148,11 @@ export default function BrowseRestaurants() {
     setShowFilters(false);
   };
 
-  const clearSingleFilter = (type) => {
-    if (type === 'country') navigate('/browse');
-    if (type === 'state') navigate(`/${urlCountry}`);
-    if (type === 'city') navigate(`/${urlCountry}/${urlState}`);
-  };
-
   if (loading) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white pb-12">
-      
+
       {/* Hero Header */}
       <header className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
@@ -176,7 +184,7 @@ export default function BrowseRestaurants() {
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                <input 
+                <input
                   type="text"
                   placeholder="Search restaurants by name, cuisine, or location..."
                   value={searchQuery}
@@ -188,14 +196,13 @@ export default function BrowseRestaurants() {
 
             {/* Filter Button and Sort */}
             <div className="flex gap-3 relative">
-              <button 
+              <button
                 ref={filterButtonRef}
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all relative ${
-                  showFilters 
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-md" 
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all relative ${showFilters
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
                     : "bg-white text-slate-700 border border-slate-200 hover:border-indigo-500 hover:shadow-sm"
-                }`}
+                  }`}
               >
                 <Filter size={18} />
                 <span>Filters</span>
@@ -203,8 +210,8 @@ export default function BrowseRestaurants() {
                   <span className="absolute -top-1 -right-1 h-3 w-3 bg-rose-500 rounded-full border-2 border-white"></span>
                 )}
               </button>
-              
-              <select 
+
+              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 hover:border-slate-300 transition-colors"
@@ -216,7 +223,7 @@ export default function BrowseRestaurants() {
 
               {/* Filters Panel - Now positioned relative to the button */}
               {showFilters && (
-                <div 
+                <div
                   ref={filtersRef}
                   className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 z-50 animate-fadeIn min-w-[320px] lg:min-w-[400px]"
                   style={{
@@ -245,9 +252,9 @@ export default function BrowseRestaurants() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-sm font-semibold text-slate-700">Country</label>
-                        
+
                       </div>
-                      <select 
+                      <select
                         value={urlCountry || ""}
                         onChange={(e) => handleLocationChange('country', e.target.value)}
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
@@ -270,9 +277,9 @@ export default function BrowseRestaurants() {
                             </span>
                           )}
                         </label>
-                        
+
                       </div>
-                      <select 
+                      <select
                         disabled={!urlCountry}
                         value={urlState || ""}
                         onChange={(e) => handleLocationChange('state', e.target.value)}
@@ -296,9 +303,9 @@ export default function BrowseRestaurants() {
                             </span>
                           )}
                         </label>
-                        
+
                       </div>
-                      <select 
+                      <select
                         disabled={!urlState}
                         value={urlCity || ""}
                         onChange={(e) => handleLocationChange('city', e.target.value)}
@@ -311,14 +318,14 @@ export default function BrowseRestaurants() {
                       </select>
                     </div>
                   </div>
-                  
+
                   {/* Active Filters Summary */}
                   <div className="mt-8 pt-6 border-t border-slate-100">
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-slate-700">Active Filters</span>
                         {(urlCountry || urlState || urlCity) && (
-                          <button 
+                          <button
                             onClick={clearFilters}
                             className="text-sm text-rose-600 font-medium hover:text-rose-700"
                           >
@@ -326,7 +333,7 @@ export default function BrowseRestaurants() {
                           </button>
                         )}
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-2">
                         {urlCountry && (
                           <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium">
@@ -410,16 +417,16 @@ export default function BrowseRestaurants() {
               const identifier = restaurant.email.split("@")[0] || restaurant.name.toLowerCase().replace(/\s+/g, '-');
 
               return (
-                <Link 
-                  key={restaurant.id} 
+                <Link
+                  key={restaurant.id}
                   to={`/${country}/${state}/${city}/${identifier}`}
                   className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 hover:border-indigo-200 hover:-translate-y-1"
                 >
                   {/* Image Section */}
                   <div className="relative h-48 overflow-hidden">
                     {restaurant.logo_url ? (
-                      <img 
-                        src={restaurant.logo_url} 
+                      <img
+                        src={restaurant.logo_url}
                         alt={restaurant.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -428,7 +435,7 @@ export default function BrowseRestaurants() {
                         <ChefHat size={48} className="text-slate-300" />
                       </div>
                     )}
-                    
+
                     {/* Overlay Badges */}
                     <div className="absolute top-4 left-4 flex flex-col gap-2">
                       {restaurant.pure_veg && (
@@ -443,9 +450,9 @@ export default function BrowseRestaurants() {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="absolute bottom-4 right-4">
-                      <button 
+                      <button
                         className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
                         onClick={(e) => {
                           e.preventDefault();
@@ -503,7 +510,7 @@ export default function BrowseRestaurants() {
             <p className="text-slate-600 mb-6 max-w-md mx-auto">
               Try adjusting your search or filter criteria to find what you're looking for.
             </p>
-            <button 
+            <button
               onClick={clearFilters}
               className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
             >
