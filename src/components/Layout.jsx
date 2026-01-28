@@ -1,12 +1,13 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Utensils, 
-  Layers, 
-  Store, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  Utensils,
+  Layers,
+  Store,
+  LogOut,
   UserCircle,
-  ChevronRight
+  ChevronRight,
+  Image as ImageIcon
 } from "lucide-react";
 
 export default function Layout({ setAuth, userRole, restaurantId }) {
@@ -19,11 +20,10 @@ export default function Layout({ setAuth, userRole, restaurantId }) {
   };
 
   // Improved NavItem with no heavy shadows
-  const navItemClass = ({ isActive }) => 
-    `flex items-center justify-between gap-3 p-3 rounded-xl transition-all duration-200 group ${
-      isActive 
-        ? "bg-indigo-600 text-white" 
-        : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+  const navItemClass = ({ isActive }) =>
+    `flex items-center justify-between gap-3 p-3 rounded-xl transition-all duration-200 group ${isActive
+      ? "bg-indigo-600 text-white"
+      : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
     }`;
 
   return (
@@ -72,6 +72,14 @@ export default function Layout({ setAuth, userRole, restaurantId }) {
                 </div>
                 <ChevronRight size={14} className="opacity-0 group-hover:opacity-100" />
               </NavLink>
+
+              <NavLink to="/admin/gallery" className={navItemClass}>
+                <div className="flex items-center gap-3">
+                  <ImageIcon size={18} />
+                  <span className="text-sm font-medium">Image Gallery</span>
+                </div>
+                <ChevronRight size={14} className="opacity-0 group-hover:opacity-100" />
+              </NavLink>
             </>
           )}
 
@@ -106,7 +114,7 @@ export default function Layout({ setAuth, userRole, restaurantId }) {
               <p className="text-[10px] text-slate-500 font-medium">Logged In</p>
             </div>
           </div>
-          
+
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 p-3 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl font-bold text-xs transition-all border border-transparent hover:border-red-500/20"
@@ -124,7 +132,7 @@ export default function Layout({ setAuth, userRole, restaurantId }) {
         {/* Dynamic Page Content */}
         <main className="flex-1 overflow-auto bg-slate-50/40 p-10">
           <div className="max-w-6xl mx-auto">
-             <Outlet />
+            <Outlet />
           </div>
         </main>
       </div>

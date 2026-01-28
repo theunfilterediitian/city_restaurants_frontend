@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../services/api";
 import {
-    ArrowLeft, Save, Trash2, Image as ImageIcon, 
-    X, Loader2, Check
+    ArrowLeft, Save, Trash2, Image as ImageIcon,
+    X, Loader2, Check,
+    Plus, Search
 } from "lucide-react";
 import { useCategoryStore } from "../store/useCategoryStore";
 
@@ -19,6 +20,10 @@ export default function AddProduct() {
     // Image handling state
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [existingImages, setExistingImages] = useState([]);
+    const [showGallery, setShowGallery] = useState(false);
+    const [galleryAssets, setGalleryAssets] = useState([]);
+    const [selectedFromGallery, setSelectedFromGallery] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const { categories, fetchCategories } = useCategoryStore();
 
@@ -30,7 +35,8 @@ export default function AddProduct() {
         iced: false,
         description: "",
         category_ids: [], // Stores IDs of selected categories
-        sizes: [{ size_label: "Regular", price: "" }]
+        sizes: [{ size_label: "Regular", price: "" }],
+        gallery_image_urls: []
     });
 
     useEffect(() => {
@@ -40,15 +46,21 @@ export default function AddProduct() {
         }
     }, [product_id]);
 
+    useEffect(() => {
+        if (showGallery) {
+            api.getMediaGallery().then(res => setGalleryAssets(res.data));
+        }
+    }, [showGallery]);
+
     const loadProductData = async () => {
         try {
             const res = await api.getProductDetails(product_id);
             const { images, categories: productCats, ...data } = res.data;
-            
+
             // Map existing categories to just IDs for the formData
             const category_ids = productCats ? productCats.map(c => c.id) : [];
-            
-            setFormData({ ...data, category_ids });
+
+            setFormData({ ...data, category_ids, gallery_image_urls: [] });
             setExistingImages(images || []);
         } catch (err) {
             setError("Failed to load product details.");
@@ -63,7 +75,7 @@ export default function AddProduct() {
             const isSelected = prev.category_ids.includes(catId);
             return {
                 ...prev,
-                category_ids: isSelected 
+                category_ids: isSelected
                     ? prev.category_ids.filter(id => id !== catId)
                     : [...prev.category_ids, catId]
             };
@@ -81,11 +93,33 @@ export default function AddProduct() {
         setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
     };
 
+    const toggleGallerySelection = (url) => {
+        setSelectedFromGallery(prev =>
+            prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
+        );
+    };
+
+    const confirmGallerySelection = () => {
+        setFormData(prev => ({
+            ...prev,
+            gallery_image_urls: [...prev.gallery_image_urls, ...selectedFromGallery]
+        }));
+        setSelectedFromGallery([]);
+        setShowGallery(false);
+    };
+
+    const removeGalleryImage = (url) => {
+        setFormData(prev => ({
+            ...prev,
+            gallery_image_urls: prev.gallery_image_urls.filter(u => u !== url)
+        }));
+    };
+
     const removeExistingImage = async (imageId) => {
         if (!window.confirm("Delete this image permanently?")) return;
         try {
             // Ensure this endpoint exists in your backend
-            await api.deleteProductImage(imageId); 
+            await api.deleteProductImage(imageId);
             setExistingImages(existingImages.filter(img => img.id !== imageId));
         } catch (err) {
             setError("Could not delete image.");
@@ -112,7 +146,7 @@ export default function AddProduct() {
 
         try {
             const data = new FormData();
-            
+
             // Backend expects "product" as a JSON string
             data.append("product", JSON.stringify(formData));
 
@@ -144,7 +178,7 @@ export default function AddProduct() {
             </button>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
+
                 {/* Left: Product Details */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
@@ -185,8 +219,8 @@ export default function AddProduct() {
                                         type="button"
                                         onClick={() => toggleCategory(cat.id)}
                                         className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 
-                                            ${formData.category_ids.includes(cat.id) 
-                                                ? "bg-indigo-600 border-indigo-600 text-white shadow-md" 
+                                            ${formData.category_ids.includes(cat.id)
+                                                ? "bg-indigo-600 border-indigo-600 text-white shadow-md"
                                                 : "bg-white border-gray-200 text-gray-600 hover:border-indigo-300"}`}
                                     >
                                         {formData.category_ids.includes(cat.id) && <Check size={14} />}
@@ -225,20 +259,40 @@ export default function AddProduct() {
                 <div className="space-y-6">
                     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
                         <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Media</h3>
-                        
-                        <label className="w-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-gray-50 cursor-pointer transition-all mb-4">
-                            <ImageIcon className="text-gray-400 mb-2" size={28} />
-                            <span className="text-xs font-semibold text-gray-500">Upload Photos</span>
-                            <input type="file" multiple className="hidden" accept="image/*" onChange={handleFileChange} />
-                        </label>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-3">
+                            <label className="w-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-gray-50 cursor-pointer transition-all">
+                                <ImageIcon className="text-gray-400 mb-2" size={28} />
+                                <span className="text-xs font-semibold text-gray-500">Upload Photos</span>
+                                <input type="file" multiple className="hidden" accept="image/*" onChange={handleFileChange} />
+                            </label>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowGallery(true)}
+                                className="w-full py-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-100 transition flex items-center justify-center gap-2"
+                            >
+                                <Plus size={16} /> Choose from Gallery
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mt-6">
                             {/* Existing Images */}
                             {existingImages.map((img) => (
                                 <div key={img.id} className="relative group aspect-square rounded-xl overflow-hidden border">
                                     <img src={img.image_url} className="object-cover w-full h-full" alt="Product" />
                                     <div className="absolute top-0 left-0 bg-indigo-600 text-[10px] text-white px-1.5 py-0.5 rounded-br-lg">SAVED</div>
                                     <button type="button" onClick={() => removeExistingImage(img.id)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <X size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                            {/* Gallery Selections */}
+                            {formData.gallery_image_urls.map((url, i) => (
+                                <div key={`gal-${i}`} className="relative group aspect-square rounded-xl overflow-hidden border border-indigo-200">
+                                    <img src={url} className="object-cover w-full h-full" alt="Gallery" />
+                                    <div className="absolute top-0 left-0 bg-indigo-500 text-[10px] text-white px-1.5 py-0.5 rounded-br-lg uppercase">Gallery</div>
+                                    <button type="button" onClick={() => removeGalleryImage(url)} className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full">
                                         <X size={12} />
                                     </button>
                                 </div>
@@ -274,6 +328,72 @@ export default function AddProduct() {
                     </div>
                 </div>
             </form>
+
+            {/* Gallery Modal */}
+            {showGallery && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <header className="p-8 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900 line-tight">Select from Gallery</h3>
+                                <p className="text-slate-500 text-sm font-medium">Click images to select</p>
+                            </div>
+
+                            <div className="flex-1 max-w-md mx-8 relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search gallery..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-12 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                                />
+                            </div>
+
+                            <button onClick={() => setShowGallery(false)} className="p-3 hover:bg-slate-50 rounded-2xl transition">
+                                <X size={24} className="text-slate-400" />
+                            </button>
+                        </header>
+
+                        <div className="flex-1 overflow-auto p-8">
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {galleryAssets
+                                    .filter(asset => asset.label.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map((asset) => (
+                                        <div
+                                            key={asset.id}
+                                            onClick={() => toggleGallerySelection(asset.image_url)}
+                                            className={`group relative aspect-square rounded-2xl overflow-hidden cursor-pointer border-4 transition-all ${selectedFromGallery.includes(asset.image_url) ? "border-indigo-600 shadow-lg" : "border-transparent"
+                                                }`}
+                                        >
+                                            <img src={asset.image_url} className="w-full h-full object-cover" alt={asset.label} />
+                                            <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-colors" />
+                                            {selectedFromGallery.includes(asset.image_url) && (
+                                                <div className="absolute top-2 right-2 bg-indigo-600 text-white p-1 rounded-full">
+                                                    <Check size={14} />
+                                                </div>
+                                            )}
+                                            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
+                                                <p className="text-[10px] font-bold text-white truncate">{asset.label}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+
+                        <footer className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-4">
+                            <button onClick={() => setShowGallery(false)} className="px-6 py-3 font-bold text-slate-500 hover:text-slate-700 transition">Cancel</button>
+                            <button
+                                onClick={confirmGallerySelection}
+                                disabled={selectedFromGallery.length === 0}
+                                className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition disabled:opacity-50"
+                            >
+                                Confirm Selection ({selectedFromGallery.length})
+                            </button>
+                        </footer>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

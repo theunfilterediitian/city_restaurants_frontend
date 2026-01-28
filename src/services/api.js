@@ -12,6 +12,10 @@ const apiClient = axios.create({
 
 
 
+// const apiClient = axios.create({
+//   baseURL: 'http://localhost:8000',
+// });
+
 
 
 // Automatically attach Token to every request
@@ -29,7 +33,7 @@ export const api = {
   // =========================
   login: (credentials) => apiClient.post('/auth/login', credentials),
 
-  getPublicRestaurantProfile: (country, state, city, identifier) => 
+  getPublicRestaurantProfile: (country, state, city, identifier) =>
     apiClient.get(`/api/v1/public/${country}/${state}/${city}/${identifier}`),
 
   // =========================
@@ -113,10 +117,22 @@ export const api = {
       {
         headers: {
           "Content-Type": "multipart/form-data",
-          
+
         },
       }
     );
-  }
+  },
 
+  // =========================
+  // Media Gallery Endpoints
+  // =========================
+  getMediaGallery: () => apiClient.get('/api/v1/media/'),
+
+  uploadMediaGallery: (data) =>
+    apiClient.post('/api/v1/media/upload/', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  deleteMediaGalleryAsset: (assetId) =>
+    apiClient.delete(`/api/v1/media/${assetId}`),
 };

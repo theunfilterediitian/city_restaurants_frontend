@@ -14,6 +14,7 @@ import AddProduct from "./pages/AddProduct";
 import TestUpload from "./pages/testupload";
 import PublicRestaurantView from "./pages/PublicRestaurantView";
 import BrowseRestaurants from "./pages/BrowseRestaurants";
+import MediaGallery from "./pages/MediaGallery";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -30,21 +31,40 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* 🔐 LOGIN */}
+        {/* =========================================================
+            PUBLIC ROUTES
+           ========================================================= */}
+
+        {/* Root is now Browse Restaurants */}
+        <Route path="/" element={<BrowseRestaurants />} />
+
         <Route
           path="/login"
           element={
             !isAuthenticated ? (
               <Login setAuth={setIsAuthenticated} />
             ) : (
-              <Navigate to="/" />
+              <Navigate to={userRole === "admin" ? "/admin/dashboard" : "/restaurant/dashboard"} />
             )
           }
         />
 
-        {/* 🔒 PROTECTED ROOT */}
+        {/* Other Public Browse Routes */}
+        <Route path="/browse" element={<BrowseRestaurants />} />
+        <Route path="/:country" element={<BrowseRestaurants />} />
+        <Route path="/:country/:state" element={<BrowseRestaurants />} />
+        <Route path="/:country/:state/:city" element={<BrowseRestaurants />} />
+
         <Route
-          path="/"
+          path="/:country/:state/:city/:identifier"
+          element={<PublicRestaurantView isPublicView={true} />}
+        />
+
+        {/* =========================================================
+            PROTECTED ROUTES (ADMIN & RESTAURANT)
+           ========================================================= */}
+
+        <Route
           element={
             isAuthenticated ? (
               <Layout
@@ -57,17 +77,7 @@ function App() {
             )
           }
         >
-          {/* 🔁 ROLE BASED REDIRECT */}
-          <Route
-            index
-            element={
-              userRole === "admin" ? (
-                <Navigate to="/admin/dashboard" />
-              ) : (
-                <Navigate to="/restaurant/dashboard" />
-              )
-            }
-          />
+          {/* Dashboard Redirect for Root within Layout context is not needed if root is public */}
 
           {/* ===== ADMIN ROUTES ===== */}
           {userRole === "admin" && (
@@ -75,66 +85,28 @@ function App() {
               <Route path="admin/dashboard" element={<AdminDashboard />} />
               <Route path="categories" element={<CategoryManager />} />
               <Route path="admin/restaurants" element={<RestaurantManager />} />
-              <Route path="admin/restaurants/new" element={<AddRestaurant />} /> {/* Add this */}
+              <Route path="admin/restaurants/new" element={<AddRestaurant />} />
               <Route path="admin/restaurants/edit/:id" element={<AddRestaurant />} />
-
+              <Route path="admin/gallery" element={<MediaGallery />} />
             </>
           )}
-
-
-
-
-
-
-
 
           {/* ===== RESTAURANT ROUTES ===== */}
           {userRole === "restaurant" && (
             <>
-              <Route
-                path="restaurant/dashboard"
-                element={<RestaurantDashboard />}
-              />
-
-              {/* Menu Management Routes */}
-              <Route
-                path="restaurant/:rest_id/menu"
-                element={<MenuManager />}
-              />
-
-              {/* Add New Product - Requires rest_id to know where to add */}
-              <Route
-                path="restaurant/:rest_id/menu/add"
-                element={<AddProduct />}
-              />
-
-              {/* Edit Existing Product - Requires rest_id for context and product_id for fetching */}
-              <Route
-                path="restaurant/:rest_id/menu/edit/:product_id"
-                element={<AddProduct />}
-              />
+              <Route path="restaurant/dashboard" element={<RestaurantDashboard />} />
+              <Route path="restaurant/:rest_id/menu" element={<MenuManager />} />
+              <Route path="restaurant/:rest_id/menu/add" element={<AddProduct />} />
+              <Route path="restaurant/:rest_id/menu/edit/:product_id" element={<AddProduct />} />
               <Route path="testupload" element={<TestUpload />} />
             </>
-          )}CategoryManager={ }
+          )}
         </Route>
 
         {/* ❌ FALLBACK */}
         <Route path="*" element={<Navigate to="/" />} />
 
-        {/* Browse Routes */}
-        <Route path="/browse" element={<BrowseRestaurants />} />
-        <Route path="/:country" element={<BrowseRestaurants />} />
-        <Route path="/:country/:state" element={<BrowseRestaurants />} />
-        <Route path="/:country/:state/:city" element={<BrowseRestaurants />} />
-
-        <Route
-          path="/:country/:state/:city/:identifier"
-          element={<PublicRestaurantView isPublicView={true} />}
-        />
-
       </Routes>
-
-
     </Router>
   );
 }
