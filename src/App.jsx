@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { useState, useEffect } from "react";
 
 // Pages
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
@@ -20,76 +21,94 @@ function App() {
     !!localStorage.getItem("token")
   );
 
-  const [userRole, setUserRole] = useState(localStorage.getItem("role"));
-  const restaurantId = localStorage.getItem("restaurant_id");
+  // Derive roles and IDs directly from storage for instant synchronization
+  const userRole = localStorage.getItem("role");
+
+  const handleAuthChange = (authenticated) => {
+    setIsAuthenticated(authenticated);
+  };
 
   useEffect(() => {
-    setUserRole(localStorage.getItem("role"));
-  }, [isAuthenticated]);
+    const syncAuth = () => {
+      setIsAuthenticated(!!localStorage.getItem("token"));
+    };
+    window.addEventListener("storage", syncAuth);
+    return () => window.removeEventListener("storage", syncAuth);
+  }, []);
 
   return (
     <Router>
       <Routes>
+        {/* 🏠 LANDING PAGE */}
+        <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
+
         {/* 🔐 LOGIN */}
         <Route
           path="/login"
           element={
             !isAuthenticated ? (
-              <Login setAuth={setIsAuthenticated} />
+              <Login setAuth={handleAuthChange} />
             ) : (
-              <Navigate to="/" />
+              <Navigate to="/dashboard" replace />
             )
           }
         />
 
-        {/* 🔒 PROTECTED ROOT */}
+        {/* 🔒 PROTECTED APP ROUTES */}
         <Route
-          path="/"
           element={
             isAuthenticated ? (
               <Layout
-                setAuth={setIsAuthenticated}
+                setAuth={handleAuthChange}
                 userRole={userRole}
-                restaurantId={restaurantId}
+                restaurantId={localStorage.getItem("restaurant_id")}
               />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/login" replace />
             )
           }
         >
           {/* 🔁 ROLE BASED REDIRECT */}
           <Route
-            index
+            path="/dashboard"
             element={
-              userRole === "admin" ? (
-                <Navigate to="/admin/dashboard" />
+              userRole?.toLowerCase() === "admin" ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : userRole?.toLowerCase() === "restaurant" ? (
+                <Navigate to="/restaurant/dashboard" replace />
               ) : (
-                <Navigate to="/restaurant/dashboard" />
+                <div className="min-h-screen flex items-center justify-center bg-[#FDFDFD]">
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="h-12 w-12 border-4 border-slate-100 border-t-amber-500 rounded-full animate-spin" />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verifying Authorization</p>
+                    {/* Fallback if somehow role is missing but authenticated */}
+                    {!userRole && (
+                      <button
+                        onClick={() => handleAuthChange(false)}
+                        className="text-[9px] font-black text-amber-600 uppercase tracking-widest hover:underline"
+                      >
+                        Reset Session
+                      </button>
+                    )}
+                  </div>
+                </div>
               )
             }
           />
 
           {/* ===== ADMIN ROUTES ===== */}
-          {userRole === "admin" && (
+          {userRole?.toLowerCase() === "admin" && (
             <>
               <Route path="admin/dashboard" element={<AdminDashboard />} />
               <Route path="categories" element={<CategoryManager />} />
               <Route path="admin/restaurants" element={<RestaurantManager />} />
-              <Route path="admin/restaurants/new" element={<AddRestaurant />} /> {/* Add this */}
+              <Route path="admin/restaurants/new" element={<AddRestaurant />} />
               <Route path="admin/restaurants/edit/:id" element={<AddRestaurant />} />
-
             </>
           )}
 
-
-
-
-
-
-
-
           {/* ===== RESTAURANT ROUTES ===== */}
-          {userRole === "restaurant" && (
+          {userRole?.toLowerCase() === "restaurant" && (
             <>
               <Route
                 path="restaurant/dashboard"
@@ -102,24 +121,24 @@ function App() {
                 element={<MenuManager />}
               />
 
-              {/* Add New Product - Requires rest_id to know where to add */}
+              {/* Add New Product */}
               <Route
                 path="restaurant/:rest_id/menu/add"
                 element={<AddProduct />}
               />
 
-              {/* Edit Existing Product - Requires rest_id for context and product_id for fetching */}
+              {/* Edit Existing Product */}
               <Route
                 path="restaurant/:rest_id/menu/edit/:product_id"
                 element={<AddProduct />}
               />
               <Route path="testupload" element={<TestUpload />} />
             </>
-          )}CategoryManager={ }
+          )}
         </Route>
 
         {/* ❌ FALLBACK */}
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
 
         {/* Browse Routes */}
         <Route path="/browse" element={<BrowseRestaurants />} />

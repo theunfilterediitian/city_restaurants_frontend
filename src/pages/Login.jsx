@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { api } from '../services/api';
-import { useNavigate, Link } from 'react-router-dom'; // Added Link and useNavigate
-import { LogIn, Lock, User, AlertCircle, Globe } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { LogIn, Lock, User, AlertCircle, Globe, Eye, EyeOff } from 'lucide-react';
 
 export default function Login({ setAuth }) {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -22,96 +23,103 @@ export default function Login({ setAuth }) {
       if (role === "restaurant") localStorage.setItem("restaurant_id", restaurant_id);
 
       setAuth(true);
+      navigate("/dashboard");
     } catch (err) {
       setError("Invalid username or password");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100">
-        
-        {/* Header */}
-        <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-indigo-50 rounded-3xl flex items-center justify-center mb-6">
-            <LogIn className="h-8 w-8 text-indigo-600" />
-          </div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-            Partner Login
-          </h2>
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            Manage your digital menu and presence
-          </p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#FDFDFD] px-4 font-sans relative overflow-hidden">
 
-        {/* Error Alert */}
-        {error && (
-          <div className="bg-rose-50 border-l-4 border-rose-400 p-4 flex items-center animate-shake rounded-r-xl">
-            <AlertCircle className="h-5 w-5 text-rose-400 mr-3" />
-            <p className="text-xs font-bold text-rose-700 uppercase tracking-tight">{error}</p>
-          </div>
-        )}
+      {/* Decorative background elements */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-slate-900/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl" />
 
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          <div className="space-y-5">
-            {/* Username Field */}
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Username</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-slate-300" />
+      <div className="max-w-md w-full relative z-10">
+        <div className="bg-white p-12 rounded-[3.5rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.1)] border border-slate-100 flex flex-col items-center">
+
+          {/* Brand Identity */}
+          <div className="mb-12 flex flex-col items-center">
+            <div className="h-16 w-16 bg-gradient-to-tr from-amber-400 to-amber-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-amber-500/30 rotate-3 mb-6">
+              <LogIn className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tightest leading-none">Access <span className="text-amber-500">Portal</span></h1>
+            <p className="mt-3 text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase">Enterprise Management OS</p>
+          </div>
+
+          {/* Error Feedback */}
+          {error && (
+            <div className="w-full bg-rose-50 border border-rose-100 p-4 mb-8 flex items-center rounded-2xl animate-shake">
+              <AlertCircle className="h-5 w-5 text-rose-500 mr-3 shrink-0" />
+              <p className="text-[11px] font-black text-rose-600 uppercase tracking-tight leading-none">{error}</p>
+            </div>
+          )}
+
+          <form className="w-full space-y-6" onSubmit={handleLogin}>
+            <div className="space-y-6">
+              {/* Identity Field */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-4">Credential Identity</label>
+                <div className="relative group">
+                  <User className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
+                  <input
+                    type="text"
+                    required
+                    className="input-premium pl-14 h-16 bg-slate-50/50"
+                    placeholder="partner_id"
+                    onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+                  />
                 </div>
-                <input
-                  type="text"
-                  required
-                  className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:bg-white focus:border-indigo-200 transition-all font-bold text-sm"
-                  placeholder="restaurent username"
-                  onChange={(e) => setCredentials({...credentials, username: e.target.value})}
-                />
+              </div>
+
+              {/* Secure Field with Visibility Toggle */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-4">Access Key</label>
+                <div className="relative group">
+                  <Lock className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    className="input-premium pl-14 pr-14 h-16 bg-slate-50/50"
+                    placeholder="••••••••"
+                    onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 p-2 rounded-xl text-slate-300 hover:text-amber-500 hover:bg-amber-50 transition-all active:scale-90"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Password Field */}
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Password</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-300" />
-                </div>
-                <input
-                  type="password"
-                  required
-                  className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:bg-white focus:border-indigo-200 transition-all font-bold text-sm"
-                  placeholder="••••••••"
-                  onChange={(e) => setCredentials({...credentials, password: e.target.value})}
-                />
-              </div>
+            <div className="pt-6">
+              <button
+                type="submit"
+                className="btn-primary w-full h-16 rounded-[2rem] text-xs"
+              >
+                Authenticate Session
+              </button>
             </div>
-          </div>
+          </form>
 
-          <div className="pt-2">
-            <button
-              type="submit"
-              className="w-full flex justify-center py-4 px-4 bg-slate-900 text-white text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-600 shadow-lg shadow-indigo-100 transition-all active:scale-[0.98]"
+          {/* secondary Navigation */}
+          <div className="mt-12 w-full pt-10 border-t border-slate-50 flex flex-col items-center">
+            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-6">Consumer Interface</span>
+            <Link
+              to="/browse"
+              className="group flex items-center gap-2.5 px-6 md:px-8 py-3 bg-slate-50 hover:bg-slate-900 rounded-full transition-all duration-500 border border-slate-100 min-w-fit"
             >
-              Sign In
-            </button>
+              <Globe size={16} className="text-amber-600 group-hover:rotate-45 transition-transform" />
+              <span className="text-[11px] font-black text-slate-500 group-hover:text-white uppercase tracking-widest whitespace-nowrap">Browse Experience</span>
+            </Link>
           </div>
-        </form>
-
-        {/* BROWSE OPTION SECTION */}
-        <div className="mt-10 pt-8 border-t border-slate-50 text-center">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-            Not a partner?
-          </p>
-          <Link 
-            to="/browse" 
-            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-100 transition-colors"
-          >
-            <Globe size={14} />
-            Browse Restaurants
-          </Link>
         </div>
+
+        <p className="mt-8 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">© 2025 INDIANRESTROS</p>
       </div>
     </div>
   );
