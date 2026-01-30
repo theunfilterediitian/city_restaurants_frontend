@@ -14,6 +14,9 @@ export default function AddRestaurant() {
   const [fetching, setFetching] = useState(isEditMode);
   const [error, setError] = useState("");
   const [isCustomType, setIsCustomType] = useState(false);
+  const [isCustomCountry, setIsCustomCountry] = useState(false);
+  const [isCustomState, setIsCustomState] = useState(false);
+  const [isCustomCity, setIsCustomCity] = useState(false);
 
   // --- Dynamic Import for country-state-city ---
   const [csc, setCsc] = useState(null);
@@ -41,6 +44,7 @@ export default function AddRestaurant() {
     country_code: "IN",
     state_code: "",
     city_code: "",
+    landmark: "",
     location: "",
     logo: null // For the File object
   });
@@ -53,8 +57,8 @@ export default function AddRestaurant() {
   // --- Helpers ---
   const generateLocationString = (cCode, sCode, cityName) => {
     if (!csc) return "";
-    const countryName = csc.Country.getCountryByCode(cCode)?.name || "";
-    const stateName = csc.State.getStateByCodeAndCountry(sCode, cCode)?.name || "";
+    const countryName = csc.Country.getCountryByCode(cCode)?.name || cCode;
+    const stateName = csc.State.getStateByCodeAndCountry(sCode, cCode)?.name || sCode;
     const parts = [cityName, stateName, countryName].filter(Boolean);
     return parts.join(", ");
   };
@@ -85,9 +89,21 @@ export default function AddRestaurant() {
           if (!defaults.includes(data.type)) setIsCustomType(true);
 
           if (data.country_code) {
+            const country = csc.Country.getCountryByCode(data.country_code);
+            if (!country) setIsCustomCountry(true);
+
             setStates(csc.State.getStatesOfCountry(data.country_code));
+
             if (data.state_code) {
+              const state = csc.State.getStateByCodeAndCountry(data.state_code, data.country_code);
+              if (!state) setIsCustomState(true);
+
               setCities(csc.City.getCitiesOfState(data.country_code, data.state_code));
+
+              if (data.city_code) {
+                const cityExists = csc.City.getCitiesOfState(data.country_code, data.state_code).some(c => c.name === data.city_code);
+                if (!cityExists) setIsCustomCity(true);
+              }
             }
           }
         } catch (err) {
@@ -114,27 +130,48 @@ export default function AddRestaurant() {
 
   const handleCountryChange = (e) => {
     const code = e.target.value;
-    const locString = generateLocationString(code, "", "");
-    setFormData({ ...formData, country_code: code, state_code: "", city_code: "", location: locString });
-    if (csc) {
-      setStates(csc.State.getStatesOfCountry(code));
+    if (code === "OTHER") {
+      setIsCustomCountry(true);
+      setIsCustomState(true);
+      setIsCustomCity(true);
+      setFormData({ ...formData, country_code: "", state_code: "", city_code: "", location: "" });
+      setStates([]);
+      setCities([]);
+    } else {
+      const locString = generateLocationString(code, "", "");
+      setFormData({ ...formData, country_code: code, state_code: "", city_code: "", landmark: "", location: locString });
+      if (csc) {
+        setStates(csc.State.getStatesOfCountry(code));
+      }
+      setCities([]);
     }
-    setCities([]);
   };
 
   const handleStateChange = (e) => {
     const code = e.target.value;
-    const locString = generateLocationString(formData.country_code, code, "");
-    setFormData({ ...formData, state_code: code, city_code: "", location: locString });
-    if (csc) {
-      setCities(csc.City.getCitiesOfState(formData.country_code, code));
+    if (code === "OTHER") {
+      setIsCustomState(true);
+      setIsCustomCity(true);
+      setFormData({ ...formData, state_code: "", city_code: "", location: generateLocationString(formData.country_code, "", "") });
+      setCities([]);
+    } else {
+      const locString = generateLocationString(formData.country_code, code, "");
+      setFormData({ ...formData, state_code: code, city_code: "", landmark: "", location: locString });
+      if (csc) {
+        setCities(csc.City.getCitiesOfState(formData.country_code, code));
+      }
     }
   };
 
   const handleCityChange = (e) => {
     const name = e.target.value;
-    const locString = generateLocationString(formData.country_code, formData.state_code, name);
-    setFormData({ ...formData, city_code: name, location: locString });
+    if (name === "OTHER") {
+      setIsCustomCity(true);
+      setFormData({ ...formData, city_code: "", location: generateLocationString(formData.country_code, formData.state_code, "") });
+    } else {
+      const locString = generateLocationString(formData.country_code, formData.state_code, name);
+      setFormData({ ...formData, city_code: name, landmark: "", location: locString });
+    }
   };
 
 
@@ -155,6 +192,7 @@ export default function AddRestaurant() {
       data.append("country_code", formData.country_code);
       data.append("state_code", formData.state_code);
       data.append("city_code", formData.city_code);
+      data.append("landmark", formData.landmark);
       data.append("location", formData.location);
       data.append("type", formData.type);
       data.append("pure_veg", formData.pure_veg);
@@ -314,27 +352,67 @@ export default function AddRestaurant() {
                   <label className="block text-sm font-medium text-gray-700">Location Details*</label>
                   <select
                     required className="w-full px-4 py-2 border rounded-lg text-sm"
-                    value={formData.country_code} onChange={handleCountryChange}
+                    value={isCustomCountry ? "OTHER" : formData.country_code} onChange={handleCountryChange}
                   >
                     <option value="">Select Country</option>
                     {countries.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
                   </select>
+                  {isCustomCountry && (
+                    <input
+                      required
+                      type="text"
+                      placeholder="Enter Country Name..."
+                      className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/30 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                      value={formData.country_code}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, country_code: val, location: generateLocationString(val, formData.state_code, formData.city_code) });
+                      }}
+                    />
+                  )}
 
                   <select
                     required className="w-full px-4 py-2 border rounded-lg text-sm disabled:bg-gray-100"
-                    value={formData.state_code} onChange={handleStateChange} disabled={!states.length}
+                    value={isCustomState ? "OTHER" : formData.state_code}
+                    onChange={handleStateChange}
+                    disabled={!states.length && !isCustomCountry}
                   >
                     <option value="">Select State</option>
                     {states.map(s => <option key={s.isoCode} value={s.isoCode}>{s.name}</option>)}
                   </select>
+                  {isCustomState && (
+                    <input
+                      required
+                      type="text"
+                      placeholder="Enter State Name..."
+                      className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/30 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                      value={formData.state_code}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, state_code: val, location: generateLocationString(formData.country_code, val, formData.city_code) });
+                      }}
+                    />
+                  )}
 
                   <select
                     required className="w-full px-4 py-2 border rounded-lg text-sm disabled:bg-gray-100"
-                    value={formData.city_code} onChange={handleCityChange} disabled={!cities.length}
+                    value={isCustomCity ? "OTHER" : formData.city_code}
+                    onChange={handleCityChange}
+                    disabled={!cities.length && !isCustomState}
                   >
                     <option value="">Select City</option>
                     {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                   </select>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Landmark</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Near Mall Road"
+                      className="w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                      value={formData.landmark}
+                      onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                    />
+                  </div>
 
                   {formData.location && (
                     <div className="flex items-center gap-2 text-[11px] text-indigo-600 bg-indigo-50 p-2 rounded-md border border-indigo-100">

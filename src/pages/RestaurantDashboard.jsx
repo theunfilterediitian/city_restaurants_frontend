@@ -5,7 +5,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import {
   Mail, MapPin, Utensils, ShieldCheck, Globe, Building2,
   Package, CheckCircle2, Leaf, Coffee, Flame, Wifi,
-  QrCode, ImageIcon, FileJson, FileText, Download
+  QrCode, ImageIcon, FileJson, FileText, Download, Navigation
 } from "lucide-react";
 
 export default function RestaurantDashboard() {
@@ -122,6 +122,9 @@ export default function RestaurantDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-50">
             <InfoItem icon={<Mail size={15} />} label="Email" value={selectedRestaurant.email} />
             <InfoItem icon={<MapPin size={15} />} label="Location" value={selectedRestaurant.location} />
+            {selectedRestaurant.landmark && (
+              <InfoItem icon={<Navigation size={15} />} label="Landmark" value={selectedRestaurant.landmark} />
+            )}
             <InfoItem icon={<Globe size={15} />} label="Region" value={`${selectedRestaurant.city_code}, ${selectedRestaurant.state_code}`} />
             <InfoItem icon={<Building2 size={15} />} label="City" value={selectedRestaurant.city_code} />
           </div>

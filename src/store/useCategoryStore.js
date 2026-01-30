@@ -5,10 +5,10 @@ export const useCategoryStore = create((set) => ({
   categories: [],
   isLoading: false,
 
-  fetchCategories: async () => {
+  fetchCategories: async (restId) => {
     set({ isLoading: true });
     try {
-      const res = await api.getCategories();
+      const res = await api.getCategories(restId);
       set({ categories: res.data });
       console.log(res.data);
     } finally {
@@ -16,9 +16,9 @@ export const useCategoryStore = create((set) => ({
     }
   },
 
-  createCategory: async (data) => {
+  createCategory: async (data, restId) => {
     await api.createCategory(data);
-    const res = await api.getCategories();
+    const res = await api.getCategories(restId);
     set({ categories: res.data });
     console.log(res.data);
   },

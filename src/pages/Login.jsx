@@ -12,8 +12,11 @@ export default function Login({ setAuth }) {
     e.preventDefault();
     setError('');
     try {
+      console.log("[Login] Attempting login for:", credentials.username);
       const res = await api.login(credentials);
       const { access_token, role, admin_id, restaurant_id } = res.data;
+
+      console.log("[Login] Success! Received role:", role);
 
       localStorage.setItem("token", access_token);
       localStorage.setItem("role", role);
@@ -21,8 +24,10 @@ export default function Login({ setAuth }) {
       if (role === "admin") localStorage.setItem("admin_id", admin_id);
       if (role === "restaurant") localStorage.setItem("restaurant_id", restaurant_id);
 
-      setAuth(true);
+      console.log("[Login] localStorage updated. Notifying App...");
+      setAuth(); // This calls updateAuth() in App.jsx
     } catch (err) {
+      console.error("[Login] Error:", err.response?.data || err.message);
       setError("Invalid username or password");
     }
   };
@@ -30,7 +35,7 @@ export default function Login({ setAuth }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100">
-        
+
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-indigo-50 rounded-3xl flex items-center justify-center mb-6">
@@ -66,7 +71,7 @@ export default function Login({ setAuth }) {
                   required
                   className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:bg-white focus:border-indigo-200 transition-all font-bold text-sm"
                   placeholder="restaurent username"
-                  onChange={(e) => setCredentials({...credentials, username: e.target.value})}
+                  onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
                 />
               </div>
             </div>
@@ -83,7 +88,7 @@ export default function Login({ setAuth }) {
                   required
                   className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:bg-white focus:border-indigo-200 transition-all font-bold text-sm"
                   placeholder="••••••••"
-                  onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                 />
               </div>
             </div>
@@ -104,8 +109,8 @@ export default function Login({ setAuth }) {
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
             Not a partner?
           </p>
-          <Link 
-            to="/browse" 
+          <Link
+            to="/browse"
             className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-100 transition-colors"
           >
             <Globe size={14} />

@@ -100,13 +100,13 @@ const DEFAULT_ICON = ChefHat;
 
 function getCategoryIcon(categoryName) {
   const lowerName = categoryName.toLowerCase();
-  
+
   for (const [key, icon] of Object.entries(CATEGORY_ICONS)) {
     if (lowerName.includes(key) || lowerName === key) {
       return icon;
     }
   }
-  
+
   if (lowerName.includes('dessert') || lowerName.includes('sweet')) return IceCream;
   if (lowerName.includes('drink') || lowerName.includes('beverage') || lowerName.includes('coffee') || lowerName.includes('tea')) return Coffee;
   if (lowerName.includes('main') || lowerName.includes('meal')) return Pizza;
@@ -115,7 +115,7 @@ function getCategoryIcon(categoryName) {
   if (lowerName.includes('juice') || lowerName.includes('smoothie')) return GlassWater;
   if (lowerName.includes('shake') || lowerName.includes('mocktail')) return CupSoda;
   if (lowerName.includes('fast') || lowerName.includes('burger') || lowerName.includes('sandwich')) return Sandwich;
-  
+
   return DEFAULT_ICON;
 }
 
@@ -129,7 +129,7 @@ export default function PublicRestaurantView() {
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [vegFilter, setVegFilter] = useState("all"); // "all", "veg", "nonveg"
-  
+
   const cart = useCartState();
 
   useEffect(() => {
@@ -161,25 +161,25 @@ export default function PublicRestaurantView() {
       categoryCounts[cat.name]++;
     });
   });
- // Calculate category counts based on current veg filter
- const getFilteredCategoryCount = (categoryName) => {
-  return products.filter(product => {
-    // Apply current veg filter
-    let passesVegFilter = true;
-    if (vegFilter === "veg") {
-      passesVegFilter = product.veg === true;
-    } else if (vegFilter === "nonveg") {
-      passesVegFilter = product.veg === false;
-    }
-    
-    // Check if product belongs to this category
-    const hasCategory = product.categories?.some(cat => cat.name === categoryName);
-    
-    return passesVegFilter && hasCategory;
-  }).length;
-};
-    // Sort categories by count (descending) - use filtered counts for sorting
-    const allCategories = Object.keys(categoryCounts)
+  // Calculate category counts based on current veg filter
+  const getFilteredCategoryCount = (categoryName) => {
+    return products.filter(product => {
+      // Apply current veg filter
+      let passesVegFilter = true;
+      if (vegFilter === "veg") {
+        passesVegFilter = product.veg === true;
+      } else if (vegFilter === "nonveg") {
+        passesVegFilter = product.veg === false;
+      }
+
+      // Check if product belongs to this category
+      const hasCategory = product.categories?.some(cat => cat.name === categoryName);
+
+      return passesVegFilter && hasCategory;
+    }).length;
+  };
+  // Sort categories by count (descending) - use filtered counts for sorting
+  const allCategories = Object.keys(categoryCounts)
     .sort((a, b) => getFilteredCategoryCount(b) - getFilteredCategoryCount(a))
     .slice(0, 8);
 
@@ -196,7 +196,7 @@ export default function PublicRestaurantView() {
     // Apply category filter
     let passesCategoryFilter = true;
     if (selectedCategories.length > 0) {
-      passesCategoryFilter = product.categories?.some(cat => 
+      passesCategoryFilter = product.categories?.some(cat =>
         selectedCategories.includes(cat.name)
       );
     }
@@ -229,7 +229,7 @@ export default function PublicRestaurantView() {
   const openStatusBorderColor = isOpen ? "border-emerald-200" : "border-rose-200";
   const statusIconColor = isOpen ? "text-emerald-500" : "text-rose-500";
 
- console.log(products);
+  console.log(products);
   return (
 
     <div className="min-h-screen bg-slate-50 pb-32">
@@ -240,8 +240,8 @@ export default function PublicRestaurantView() {
           {/* LOGO */}
           <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-100 bg-gradient-to-br from-emerald-50 to-indigo-50 flex items-center justify-center">
             {restaurant.logo_url ? (
-              <img 
-                src={restaurant.logo_url} 
+              <img
+                src={restaurant.logo_url}
                 alt={`${restaurant.name} Logo`}
                 className="w-full h-full object-cover"
               />
@@ -251,7 +251,7 @@ export default function PublicRestaurantView() {
               </span>
             )}
           </div>
-          
+
           {/* NAME AND TYPE */}
           <div>
             <h1 className="text-2xl font-black text-gray-900">{restaurant.name}</h1>
@@ -271,7 +271,14 @@ export default function PublicRestaurantView() {
               <MapPin size={18} className="text-slate-400 mt-0.5" />
               <div>
                 <p className="text-slate-700 font-medium">Address</p>
-                <p className="text-slate-600">{restaurant.location}</p>
+                <p className="text-slate-600">
+                  {restaurant.location}
+                  {restaurant.landmark && (
+                    <span className="block text-sm text-indigo-500 font-medium mt-0.5">
+                      📍 Near {restaurant.landmark}
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
           </div>
@@ -296,7 +303,7 @@ export default function PublicRestaurantView() {
       {/* VEG/NON-VEG FILTER */}
       <div className="px-6 mt-6">
         <div className="flex justify-between items-center mb-2">
-          
+
           {(selectedCategories.length > 0 || vegFilter !== "all") && (
             <button
               onClick={clearFilters}
@@ -311,57 +318,51 @@ export default function PublicRestaurantView() {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setVegFilter("all")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-              vegFilter === "all"
-                ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${vegFilter === "all"
+              ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+              }`}
           >
             <ChefHat size={18} />
             <span className="font-medium">All</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-              vegFilter === "all"
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-slate-100 text-slate-600"
-            }`}>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${vegFilter === "all"
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-slate-100 text-slate-600"
+              }`}>
               {products.length}
             </span>
           </button>
 
           <button
             onClick={() => setVegFilter("veg")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-              vegFilter === "veg"
-                ? "border-green-500 bg-green-50 text-green-700"
-                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${vegFilter === "veg"
+              ? "border-green-500 bg-green-50 text-green-700"
+              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+              }`}
           >
             <Leaf size={18} className="text-green-600" />
             <span className="font-medium">Veg</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-              vegFilter === "veg"
-                ? "bg-green-100 text-green-700"
-                : "bg-slate-100 text-slate-600"
-            }`}>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${vegFilter === "veg"
+              ? "bg-green-100 text-green-700"
+              : "bg-slate-100 text-slate-600"
+              }`}>
               {vegCount}
             </span>
           </button>
 
           <button
             onClick={() => setVegFilter("nonveg")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-              vegFilter === "nonveg"
-                ? "border-red-500 bg-red-50 text-red-700"
-                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${vegFilter === "nonveg"
+              ? "border-red-500 bg-red-50 text-red-700"
+              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+              }`}
           >
             <Beef size={18} className="text-red-600" />
             <span className="font-medium">Non-Veg</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-              vegFilter === "nonveg"
-                ? "bg-red-100 text-red-700"
-                : "bg-slate-100 text-slate-600"
-            }`}>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${vegFilter === "nonveg"
+              ? "bg-red-100 text-red-700"
+              : "bg-slate-100 text-slate-600"
+              }`}>
               {nonvegCount}
             </span>
           </button>
@@ -375,11 +376,10 @@ export default function PublicRestaurantView() {
           <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
             <button
               onClick={() => setSelectedCategories([])}
-              className={`flex flex-col items-center justify-center min-w-[80px] px-4 py-3 rounded-2xl border-2 transition-all ${
-                selectedCategories.length === 0
-                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-              }`}
+              className={`flex flex-col items-center justify-center min-w-[80px] px-4 py-3 rounded-2xl border-2 transition-all ${selectedCategories.length === 0
+                ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                }`}
             >
               <ChefHat size={24} />
               <span className="mt-2 text-xs font-bold">All</span>
@@ -394,21 +394,19 @@ export default function PublicRestaurantView() {
                 <button
                   key={category}
                   onClick={() => toggleCategory(category)}
-                  className={`flex flex-col items-center justify-center min-w-[80px] px-4 py-3 rounded-2xl border-2 transition-all relative ${
-                    isSelected
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                  }`}
+                  className={`flex flex-col items-center justify-center min-w-[80px] px-4 py-3 rounded-2xl border-2 transition-all relative ${isSelected
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                    }`}
                 >
                   <Icon size={24} />
                   <span className="mt-2 text-xs font-bold text-center truncate max-w-full">
                     {category}
                   </span>
-                  <span className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    isSelected 
-                      ? "bg-emerald-500 text-white" 
-                      : "bg-slate-100 text-slate-600"
-                  }`}>
+                  <span className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isSelected
+                    ? "bg-emerald-500 text-white"
+                    : "bg-slate-100 text-slate-600"
+                    }`}>
                     {itemCount}
                   </span>
                 </button>
@@ -469,7 +467,7 @@ export default function PublicRestaurantView() {
           )}
         </div>
       </div>
-      
+
       {/* PRODUCTS */}
       <main className="px-6 mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.length > 0 ? (
@@ -493,14 +491,13 @@ export default function PublicRestaurantView() {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Veg/Non-Veg Dot Indicator */}
                 {p.veg !== undefined && (
-                  <div className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center ${
-                    p.veg 
-                      ? "bg-green-100 border-2 border-green-500" 
-                      : "bg-red-100 border-2 border-red-500"
-                  }`}>
+                  <div className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center ${p.veg
+                    ? "bg-green-100 border-2 border-green-500"
+                    : "bg-red-100 border-2 border-red-500"
+                    }`}>
                     {p.veg ? (
                       <Leaf size={16} className="text-green-600" />
                     ) : (
@@ -535,22 +532,21 @@ export default function PublicRestaurantView() {
               {/* PRICE + ADD */}
               <div className="flex justify-between items-center mt-4">
                 <div className="flex items-center gap-2">
-                {p.sizes?.[0]?.size_label && (
-                    <span className={`text-xs px-3 py-1 rounded-full font-bold ${
-                      p.sizes[0].size_label.toLowerCase().includes('half') 
-                        ? "bg-blue-100 text-teal-700" 
-                        : p.sizes[0].size_label.toLowerCase().includes('full')
+                  {p.sizes?.[0]?.size_label && (
+                    <span className={`text-xs px-3 py-1 rounded-full font-bold ${p.sizes[0].size_label.toLowerCase().includes('half')
+                      ? "bg-blue-100 text-teal-700"
+                      : p.sizes[0].size_label.toLowerCase().includes('full')
                         ? "bg-blue-100 text-blue-700"
                         : "bg-purple-100 text-purple-700"
-                    }`}>
+                      }`}>
                       {p.sizes[0].size_label}
                     </span>
                   )}
-                  
+
                   <span className="font-black text-indigo-600 text-lg">
                     ₹{p.sizes?.[0]?.price || 0}
                   </span>
-                  
+
                 </div>
                 <button
                   onClick={() => setModalItem(p)}
@@ -626,11 +622,10 @@ function AddItemModal({ item, onClose, onAdd }) {
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-black">{item.name}</h2>
           {item.veg !== undefined && (
-            <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
-              item.veg 
-                ? "bg-green-100 text-green-700" 
-                : "bg-red-100 text-red-700"
-            }`}>
+            <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${item.veg
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+              }`}>
               {item.veg ? (
                 <>
                   <Leaf size={14} />
@@ -651,11 +646,10 @@ function AddItemModal({ item, onClose, onAdd }) {
             <button
               key={s.id}
               onClick={() => setSize(s)}
-              className={`w-full p-4 rounded-xl border ${
-                size.id === s.id
-                  ? "border-emerald-500 bg-emerald-50"
-                  : "border-slate-200"
-              }`}
+              className={`w-full p-4 rounded-xl border ${size.id === s.id
+                ? "border-emerald-500 bg-emerald-50"
+                : "border-slate-200"
+                }`}
             >
               {s.size_label} — ₹{s.price}
             </button>
@@ -788,8 +782,15 @@ function CartModal({ cart, onClose }) {
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      Loading…
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="text-center">
+        <div className="relative inline-block">
+          <div className="h-16 w-16 border-4 border-slate-200 rounded-full" />
+          <div className="h-16 w-16 border-4 border-emerald-500 border-t-transparent rounded-full absolute top-0 left-0 animate-spin" />
+          <Utensils className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-emerald-500" size={20} />
+        </div>
+        <p className="mt-4 text-sm font-semibold text-slate-700 tracking-wide animate-pulse">Loading Menu...</p>
+      </div>
     </div>
   );
 }

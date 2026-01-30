@@ -17,13 +17,7 @@ export default function AddProduct() {
     const [fetching, setFetching] = useState(isEditMode);
     const [error, setError] = useState("");
 
-    // Image handling state
-    const [selectedFiles, setSelectedFiles] = useState([]);
-    const [existingImages, setExistingImages] = useState([]);
-    const [showGallery, setShowGallery] = useState(false);
-    const [galleryAssets, setGalleryAssets] = useState([]);
-    const [selectedFromGallery, setSelectedFromGallery] = useState([]);
-    const [searchTerm, setSearchTerm] = useState("");
+    // Image handling removed as per request
 
     const { categories, fetchCategories } = useCategoryStore();
 
@@ -36,21 +30,16 @@ export default function AddProduct() {
         description: "",
         category_ids: [], // Stores IDs of selected categories
         sizes: [{ size_label: "Regular", price: "" }],
-        gallery_image_urls: []
     });
 
     useEffect(() => {
-        fetchCategories();
+        fetchCategories(rest_id);
         if (isEditMode) {
             loadProductData();
         }
-    }, [product_id]);
+    }, [product_id, rest_id]);
 
-    useEffect(() => {
-        if (showGallery) {
-            api.getMediaGallery().then(res => setGalleryAssets(res.data));
-        }
-    }, [showGallery]);
+
 
     const loadProductData = async () => {
         try {
@@ -60,8 +49,7 @@ export default function AddProduct() {
             // Map existing categories to just IDs for the formData
             const category_ids = productCats ? productCats.map(c => c.id) : [];
 
-            setFormData({ ...data, category_ids, gallery_image_urls: [] });
-            setExistingImages(images || []);
+            setFormData({ ...data, category_ids });
         } catch (err) {
             setError("Failed to load product details.");
         } finally {
@@ -82,49 +70,7 @@ export default function AddProduct() {
         });
     };
 
-    // --- Image Logic ---
-    const handleFileChange = (e) => {
-        const newFiles = Array.from(e.target.files);
-        setSelectedFiles(prev => [...prev, ...newFiles]);
-        e.target.value = "";
-    };
-
-    const removeNewFile = (index) => {
-        setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
-    };
-
-    const toggleGallerySelection = (url) => {
-        setSelectedFromGallery(prev =>
-            prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
-        );
-    };
-
-    const confirmGallerySelection = () => {
-        setFormData(prev => ({
-            ...prev,
-            gallery_image_urls: [...prev.gallery_image_urls, ...selectedFromGallery]
-        }));
-        setSelectedFromGallery([]);
-        setShowGallery(false);
-    };
-
-    const removeGalleryImage = (url) => {
-        setFormData(prev => ({
-            ...prev,
-            gallery_image_urls: prev.gallery_image_urls.filter(u => u !== url)
-        }));
-    };
-
-    const removeExistingImage = async (imageId) => {
-        if (!window.confirm("Delete this image permanently?")) return;
-        try {
-            // Ensure this endpoint exists in your backend
-            await api.deleteProductImage(imageId);
-            setExistingImages(existingImages.filter(img => img.id !== imageId));
-        } catch (err) {
-            setError("Could not delete image.");
-        }
-    };
+    // --- Image Logic removed ---
 
     // --- Dynamic Sizes Logic ---
     const updateSize = (index, field, value) => {
@@ -160,10 +106,7 @@ export default function AddProduct() {
 
 
 
-            // Backend expects "images" as a list of files
-            selectedFiles.forEach((file) => {
-                data.append("images", file);
-            });
+            // Image data appending removed
 
             if (isEditMode) {
                 await api.updateProductDetails(product_id, data);
@@ -269,55 +212,7 @@ export default function AddProduct() {
                 <div className="space-y-6">
                     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
                         <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Media</h3>
-
-                        <div className="space-y-3">
-                            <label className="w-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-gray-50 cursor-pointer transition-all">
-                                <ImageIcon className="text-gray-400 mb-2" size={28} />
-                                <span className="text-xs font-semibold text-gray-500">Upload Photos</span>
-                                <input type="file" multiple className="hidden" accept="image/*" onChange={handleFileChange} />
-                            </label>
-
-                            <button
-                                type="button"
-                                onClick={() => setShowGallery(true)}
-                                className="w-full py-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-100 transition flex items-center justify-center gap-2"
-                            >
-                                <Plus size={16} /> Choose from Gallery
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mt-6">
-                            {/* Existing Images */}
-                            {existingImages.map((img) => (
-                                <div key={img.id} className="relative group aspect-square rounded-xl overflow-hidden border">
-                                    <img src={img.image_url} className="object-cover w-full h-full" alt="Product" />
-                                    <div className="absolute top-0 left-0 bg-indigo-600 text-[10px] text-white px-1.5 py-0.5 rounded-br-lg">SAVED</div>
-                                    <button type="button" onClick={() => removeExistingImage(img.id)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <X size={12} />
-                                    </button>
-                                </div>
-                            ))}
-                            {/* Gallery Selections */}
-                            {formData.gallery_image_urls.map((url, i) => (
-                                <div key={`gal-${i}`} className="relative group aspect-square rounded-xl overflow-hidden border border-indigo-200">
-                                    <img src={url} className="object-cover w-full h-full" alt="Gallery" />
-                                    <div className="absolute top-0 left-0 bg-indigo-500 text-[10px] text-white px-1.5 py-0.5 rounded-br-lg uppercase">Gallery</div>
-                                    <button type="button" onClick={() => removeGalleryImage(url)} className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full">
-                                        <X size={12} />
-                                    </button>
-                                </div>
-                            ))}
-                            {/* New Previews */}
-                            {selectedFiles.map((file, i) => (
-                                <div key={i} className="relative group aspect-square rounded-xl overflow-hidden border border-emerald-400">
-                                    <img src={URL.createObjectURL(file)} className="object-cover w-full h-full" alt="Preview" />
-                                    <div className="absolute top-0 left-0 bg-emerald-500 text-[10px] text-white px-1.5 py-0.5 rounded-br-lg">NEW</div>
-                                    <button type="button" onClick={() => removeNewFile(i)} className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full">
-                                        <X size={12} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
+                        <p className="text-xs text-gray-500 italic">Images are managed via categories.</p>
                     </div>
 
                     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
@@ -339,71 +234,7 @@ export default function AddProduct() {
                 </div>
             </form>
 
-            {/* Gallery Modal */}
-            {showGallery && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <header className="p-8 border-b border-slate-100 flex justify-between items-center">
-                            <div>
-                                <h3 className="text-2xl font-black text-slate-900 line-tight">Select from Gallery</h3>
-                                <p className="text-slate-500 text-sm font-medium">Click images to select</p>
-                            </div>
 
-                            <div className="flex-1 max-w-md mx-8 relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Search gallery..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
-                                />
-                            </div>
-
-                            <button onClick={() => setShowGallery(false)} className="p-3 hover:bg-slate-50 rounded-2xl transition">
-                                <X size={24} className="text-slate-400" />
-                            </button>
-                        </header>
-
-                        <div className="flex-1 overflow-auto p-8">
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                {galleryAssets
-                                    .filter(asset => asset.label.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map((asset) => (
-                                        <div
-                                            key={asset.id}
-                                            onClick={() => toggleGallerySelection(asset.image_url)}
-                                            className={`group relative aspect-square rounded-2xl overflow-hidden cursor-pointer border-4 transition-all ${selectedFromGallery.includes(asset.image_url) ? "border-indigo-600 shadow-lg" : "border-transparent"
-                                                }`}
-                                        >
-                                            <img src={asset.image_url} className="w-full h-full object-cover" alt={asset.label} />
-                                            <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-colors" />
-                                            {selectedFromGallery.includes(asset.image_url) && (
-                                                <div className="absolute top-2 right-2 bg-indigo-600 text-white p-1 rounded-full">
-                                                    <Check size={14} />
-                                                </div>
-                                            )}
-                                            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
-                                                <p className="text-[10px] font-bold text-white truncate">{asset.label}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                            </div>
-                        </div>
-
-                        <footer className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-4">
-                            <button onClick={() => setShowGallery(false)} className="px-6 py-3 font-bold text-slate-500 hover:text-slate-700 transition">Cancel</button>
-                            <button
-                                onClick={confirmGallerySelection}
-                                disabled={selectedFromGallery.length === 0}
-                                className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition disabled:opacity-50"
-                            >
-                                Confirm Selection ({selectedFromGallery.length})
-                            </button>
-                        </footer>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

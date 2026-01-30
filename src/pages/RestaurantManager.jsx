@@ -53,7 +53,7 @@ export default function RestaurantManager() {
   // Filter Logic
   const filteredData = restaurants.filter((r) => {
     const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
-                          r.location?.toLowerCase().includes(search.toLowerCase());
+      r.location?.toLowerCase().includes(search.toLowerCase());
     const matchesType = filterType === "All" || r.type === filterType;
     return matchesSearch && matchesType;
   });
@@ -62,7 +62,7 @@ export default function RestaurantManager() {
 
   return (
     <div className="m-6 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-      
+
       {/* Header */}
       <div className="p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -113,9 +113,9 @@ export default function RestaurantManager() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredData.map((r) => (
-              <tr 
-                key={r.id} 
-                onClick={() => handleRowClick(r)} 
+              <tr
+                key={r.id}
+                onClick={() => handleRowClick(r)}
                 className="hover:bg-slate-50/80 transition-all group cursor-pointer"
               >
                 <td className="px-8 py-6">
@@ -134,18 +134,19 @@ export default function RestaurantManager() {
                   </div>
                 </td>
                 <td className="px-8 py-6">
-                   <div className="text-sm font-bold text-slate-600">{r.location || "No Location"}</div>
-                   <div className="text-[10px] font-black text-slate-400 uppercase mt-1 tracking-tighter">{r.email}</div>
+                  <div className="text-sm font-bold text-slate-600">{r.location || "No Location"}</div>
+                  {r.landmark && <div className="text-[11px] font-bold text-indigo-500 mb-1">Near {r.landmark}</div>}
+                  <div className="text-[10px] font-black text-slate-400 uppercase mt-1 tracking-tighter">{r.email}</div>
                 </td>
                 <td className="px-8 py-6 text-right">
                   <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); navigate(`/admin/restaurants/edit/${r.id}`); }}
                       className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-white border border-transparent hover:border-indigo-100 rounded-xl transition shadow-sm"
                     >
                       <Edit size={18} />
                     </button>
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
                       className="p-3 text-slate-400 hover:text-rose-600 hover:bg-white border border-transparent hover:border-rose-100 rounded-xl transition shadow-sm"
                     >

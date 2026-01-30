@@ -200,8 +200,8 @@ export default function BrowseRestaurants() {
                 ref={filterButtonRef}
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all relative ${showFilters
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
-                    : "bg-white text-slate-700 border border-slate-200 hover:border-indigo-500 hover:shadow-sm"
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                  : "bg-white text-slate-700 border border-slate-200 hover:border-indigo-500 hover:shadow-sm"
                   }`}
               >
                 <Filter size={18} />
@@ -221,17 +221,17 @@ export default function BrowseRestaurants() {
                 <option value="name">A to Z</option>
               </select>
 
-              {/* Filters Panel - Now positioned relative to the button */}
+              {/* Filters Panel - Mobile Responsive */}
               {showFilters && (
                 <div
                   ref={filtersRef}
-                  className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 z-50 animate-fadeIn min-w-[320px] lg:min-w-[400px]"
+                  className="fixed inset-x-4 top-[20%] lg:absolute lg:inset-auto lg:top-full lg:right-0 lg:mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 z-50 animate-fadeIn w-auto lg:min-w-[400px]"
                   style={{
                     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)'
                   }}
                 >
-                  {/* Connector triangle/arrow */}
-                  <div className="absolute -top-2 right-6 w-4 h-4 bg-white transform rotate-45 border-t border-l border-slate-200"></div>
+                  {/* Connector triangle (hidden on mobile) */}
+                  <div className="hidden lg:block absolute -top-2 right-6 w-4 h-4 bg-white transform rotate-45 border-t border-l border-slate-200"></div>
 
                   {/* Header with close button */}
                   <div className="flex items-center justify-between mb-6">
@@ -484,9 +484,16 @@ export default function BrowseRestaurants() {
                       {restaurant.description || "Experience delicious cuisine and great service"}
                     </p>
 
-                    <div className="flex items-center gap-2 text-slate-500 text-sm mb-4">
-                      <MapPin size={16} className="text-indigo-500" />
-                      <span>{restaurant.location || `${restaurant.city_code}, ${getStateName(restaurant.state_code, restaurant.country_code)}`}</span>
+                    <div className="flex flex-col gap-1 text-slate-500 text-sm mb-4">
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} className="text-indigo-500" />
+                        <span className="truncate">{restaurant.location || `${restaurant.city_code}, ${getStateName(restaurant.state_code, restaurant.country_code)}`}</span>
+                      </div>
+                      {restaurant.landmark && (
+                        <div className="flex items-center gap-2 pl-6">
+                          <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-tighter">Near {restaurant.landmark}</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100">

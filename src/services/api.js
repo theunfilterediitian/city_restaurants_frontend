@@ -57,10 +57,15 @@ export const api = {
   // =========================
   // Category Endpoints
   // =========================
-  getCategories: () => apiClient.get('/api/v1/categories/'),
+  getCategories: (restId) => {
+    const url = restId ? `/api/v1/categories/?rest_id=${restId}` : '/api/v1/categories/';
+    return apiClient.get(url);
+  },
 
-  createCategory: (data) =>
-    apiClient.post('/api/v1/categories/', data),
+  createCategory: (formData) =>
+    apiClient.post('/api/v1/categories/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 
   deleteCategory: (categoryId) =>
     apiClient.delete(`/api/v1/categories/${categoryId}`),

@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Utensils,
@@ -7,11 +8,14 @@ import {
   LogOut,
   UserCircle,
   ChevronRight,
+  Menu,
+  X,
   Image as ImageIcon
 } from "lucide-react";
 
 export default function Layout({ setAuth, userRole, restaurantId }) {
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -27,9 +31,28 @@ export default function Layout({ setAuth, userRole, restaurantId }) {
     }`;
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-white overflow-hidden">
+      {/* MOBILE OVERLAY */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className="w-72 bg-slate-950 text-white flex flex-col border-r border-slate-800">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-72 bg-slate-950 text-white flex flex-col border-r border-slate-800 transition-transform duration-300 transform
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:relative lg:translate-x-0 lg:flex
+      `}>
+        {/* Sidebar Close Button (Mobile Only) */}
+        <button
+          className="lg:hidden absolute top-6 right-6 p-2 text-slate-400 hover:text-white"
+          onClick={() => setIsSidebarOpen(false)}
+        >
+          <X size={24} />
+        </button>
         {/* Brand Header */}
         <div className="p-8 pb-10 flex items-center gap-3">
           <div className="h-9 w-9 bg-indigo-500 rounded-lg flex items-center justify-center">
@@ -65,21 +88,14 @@ export default function Layout({ setAuth, userRole, restaurantId }) {
                 <ChevronRight size={14} className="opacity-0 group-hover:opacity-100" />
               </NavLink>
 
-              <NavLink to="/categories" className={navItemClass}>
-                <div className="flex items-center gap-3">
-                  <Layers size={18} />
-                  <span className="text-sm font-medium">Categories</span>
-                </div>
-                <ChevronRight size={14} className="opacity-0 group-hover:opacity-100" />
-              </NavLink>
 
-              <NavLink to="/admin/gallery" className={navItemClass}>
+              {/* <NavLink to="/admin/gallery" className={navItemClass}>
                 <div className="flex items-center gap-3">
                   <ImageIcon size={18} />
                   <span className="text-sm font-medium">Image Gallery</span>
                 </div>
                 <ChevronRight size={14} className="opacity-0 group-hover:opacity-100" />
-              </NavLink>
+              </NavLink> */}
             </>
           )}
 
@@ -98,6 +114,14 @@ export default function Layout({ setAuth, userRole, restaurantId }) {
                   <Utensils size={18} />
                   <span className="text-sm font-medium">Menu Manager</span>
                 </div>
+              </NavLink>
+
+              <NavLink to={`/restaurant/${restaurantId}/categories`} className={navItemClass}>
+                <div className="flex items-center gap-3">
+                  <Layers size={18} />
+                  <span className="text-sm font-medium">Category Manager</span>
+                </div>
+                <ChevronRight size={14} className="opacity-0 group-hover:opacity-100" />
               </NavLink>
             </>
           )}
@@ -126,11 +150,27 @@ export default function Layout({ setAuth, userRole, restaurantId }) {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Clean Header */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        {/* Mobile Header */}
+        <header className="lg:hidden h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 shrink-0 z-30">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+              <Utensils className="text-white" size={16} />
+            </div>
+            <h1 className="font-bold text-lg tracking-tight uppercase">
+              QR_<span className="text-indigo-500">menu</span>
+            </h1>
+          </div>
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+          >
+            <Menu size={24} />
+          </button>
+        </header>
 
         {/* Dynamic Page Content */}
-        <main className="flex-1 overflow-auto bg-slate-50/40 p-10">
+        <main className="flex-1 overflow-auto bg-slate-50/40 p-6 md:p-10">
           <div className="max-w-6xl mx-auto">
             <Outlet />
           </div>
