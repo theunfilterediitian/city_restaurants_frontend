@@ -88,11 +88,8 @@ export default function AddProduct() {
 
     // --- Gallery Image Logic ---
     const toggleGalleryImage = (imageUrl) => {
-        setSelectedGalleryUrls(prev =>
-            prev.includes(imageUrl)
-                ? prev.filter(url => url !== imageUrl)
-                : [...prev, imageUrl]
-        );
+        // Only allow one image selection - replace if another is picked, or toggle off if same is picked
+        setSelectedGalleryUrls(prev => prev.includes(imageUrl) ? [] : [imageUrl]);
     };
 
     const addSelectedImagesToProduct = () => {
@@ -324,8 +321,8 @@ export default function AddProduct() {
                         {/* Modal Header */}
                         <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50">
                             <div>
-                                <h2 className="text-2xl font-black text-gray-900">Select Images</h2>
-                                <p className="text-sm text-gray-500 mt-1">Choose images from the media gallery</p>
+                                <h2 className="text-2xl font-black text-gray-900">Select Image</h2>
+                                <p className="text-sm text-gray-500 mt-1">Choose a product image from the media gallery</p>
                             </div>
                             <button
                                 onClick={() => setShowGalleryModal(false)}
