@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../services/api";
 import { Country, State } from "country-state-city";
-import { 
-  Building2, Users, Globe, ShieldCheck, 
+import {
+  Building2, Users, Globe, ShieldCheck,
   ChevronRight, MapPin, Utensils, Activity,
   PieChart, LayoutGrid, PlusCircle
 } from "lucide-react";
@@ -39,93 +39,109 @@ export default function AdminDashboard() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8 antialiased pb-20">
-      
+    <div className="space-y-10 pb-20">
+
       {/* 1. ADMIN HEADER */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Global Overview</h1>
-          <p className="text-slate-500 font-medium">Platform Management & Restaurant Analytics</p>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tightest">Insight Engine</h1>
+          <p className="text-slate-500 font-bold mt-2 uppercase tracking-widest text-[11px]">Core Platform Analytics</p>
         </div>
-     
       </header>
 
       {/* 2. PLATFORM STATS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard icon={<Building2 size={24} />} label="Total Outlets" value={adminStats.totalOutlets} color="text-indigo-600" />
-        <StatCard icon={<ShieldCheck size={24} />} label="Pure Veg Stores" value={adminStats.pureVegOutlets} color="text-emerald-600" />
-        <StatCard icon={<Globe size={24} />} label="Countries" value={adminStats.uniqueCountries} color="text-sky-600" />
-        <StatCard icon={<Activity size={24} />} label="Cities Live" value={adminStats.uniqueCities} color="text-orange-600" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard icon={<Building2 size={24} />} label="Global Outlets" value={adminStats.totalOutlets} color="text-amber-600" bg="bg-amber-50" />
+        <StatCard icon={<ShieldCheck size={24} />} label="Pure Veg Stores" value={adminStats.pureVegOutlets} color="text-emerald-600" bg="bg-emerald-50" />
+        <StatCard icon={<Globe size={24} />} label="Market Reach" value={adminStats.uniqueCountries} color="text-sky-600" bg="bg-sky-50" />
+        <StatCard icon={<Activity size={24} />} label="Cities Active" value={adminStats.uniqueCities} color="text-rose-600" bg="bg-rose-50" />
       </div>
 
-      {/* 3. GEOGRAPHICAL REACH (Visual Breakdown) */}
-      <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-3 mb-8">
-           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
-              <PieChart size={20} />
-           </div>
-           <h3 className="text-xl font-black text-slate-900">Platform Composition</h3>
+      {/* 3. GEOGRAPHICAL REACH */}
+      <div className="card-premium p-10">
+        <div className="flex items-center gap-4 mb-10">
+          <div className="h-12 w-12 bg-amber-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-600/20">
+            <PieChart size={24} />
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-slate-900">Portfolio Breakdown</h3>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Platform Composition</p>
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <ProgressItem 
-            label="Pure Veg vs Non-Veg Ratio" 
-            value={adminStats.pureVegOutlets} 
-            total={adminStats.totalOutlets} 
-            color="bg-emerald-500" 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+          <ProgressItem
+            label="Dietary Focus (Veg Ratio)"
+            value={adminStats.pureVegOutlets}
+            total={adminStats.totalOutlets}
+            color="bg-emerald-500"
           />
-          <ProgressItem 
-            label="Multi-City Presence" 
-            value={adminStats.uniqueCities} 
-            total={adminStats.totalOutlets} 
-            color="bg-indigo-500" 
+          <ProgressItem
+            label="Regional Depth Index"
+            value={adminStats.uniqueCities}
+            total={adminStats.totalOutlets}
+            color="bg-amber-500"
           />
         </div>
       </div>
 
       {/* 4. RESTAURANT DIRECTORY GRID */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-           <LayoutGrid size={20} className="text-slate-400" />
-           <h3 className="text-xl font-black text-slate-900">Registered Outlets</h3>
+      <section className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 bg-slate-900 text-white rounded-xl flex items-center justify-center">
+              <LayoutGrid size={20} />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Enterprise Portfolio</h3>
+          </div>
+          <Link to="/admin/restaurants/new" className="btn-primary py-2.5 px-5 text-sm">
+            <PlusCircle size={18} />
+            Register New
+          </Link>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {restaurants.map((res) => (
-            <Link 
-              key={res.id} 
+            <Link
+              key={res.id}
               to={`/${res.country_code}/${res.state_code}/${res.city_code}/${res.email.split('@')[0]}`}
-              className="bg-white group p-6 rounded-[2rem] border border-slate-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-50/50 transition-all duration-500 relative overflow-hidden"
+              className="card-premium group p-8 relative hover:ring-2 hover:ring-amber-500/20 active:scale-[0.98]"
             >
               {/* Status Indicator */}
-              <div className="absolute top-6 right-6 flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live</span>
+              <div className="absolute top-8 right-8 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Active</span>
               </div>
 
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-14 w-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="flex items-center gap-5 mb-8">
+                <div className="h-16 w-16 rounded-[1.25rem] bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-110 transition-transform duration-500">
                   {res.logo_url ? (
                     <img src={res.logo_url} alt="logo" className="object-cover w-full h-full" />
                   ) : (
-                    <Building2 size={24} className="text-slate-300" />
+                    <Building2 size={28} className="text-slate-300" />
                   )}
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{res.name}</h4>
-                  <p className="text-xs font-medium text-slate-500">{res.type}</p>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-black text-lg text-slate-900 truncate group-hover:text-amber-600 transition-colors uppercase tracking-tight">{res.name}</h4>
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{res.type}</p>
                 </div>
               </div>
 
-              <div className="space-y-3 pt-4 border-t border-slate-50">
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                  <MapPin size={14} className="text-slate-300" />
-                  {res.city_code}, {res.state_code}
+              <div className="space-y-5 pt-6 border-t border-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
+                    <MapPin size={16} />
+                  </div>
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+                    {res.city_code} <span className="text-slate-300 mx-1">/</span> {res.state_code}
+                  </p>
                 </div>
-                <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                      <Utensils size={12} /> View Digital Menu
-                   </div>
-                   <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-2 text-[10px] font-black text-amber-600 uppercase tracking-widest">
+                    Explore Experience
+                  </div>
+                  <div className="h-8 w-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 group-hover:translate-x-1 transition-all">
+                    <ChevronRight size={18} />
+                  </div>
                 </div>
               </div>
             </Link>
@@ -137,12 +153,14 @@ export default function AdminDashboard() {
 }
 
 // Reusable Stat Component
-function StatCard({ icon, label, value, color }) {
+function StatCard({ icon, label, value, color, bg }) {
   return (
-    <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-      <div className={`${color} mb-4`}>{icon}</div>
-      <div className="text-3xl font-black text-slate-900 mb-1">{value}</div>
-      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</div>
+    <div className="card-premium p-8 group hover:-translate-y-1">
+      <div className={`h-12 w-12 ${bg} ${color} rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform`}>
+        {icon}
+      </div>
+      <div className="text-4xl font-black text-slate-900 mb-2 tracking-tighter">{value}</div>
+      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{label}</div>
     </div>
   );
 }

@@ -1,29 +1,42 @@
 import { create } from 'zustand';
-import { api } from '../services/api'; // Fixed import
+import { api } from '../services/api';
 
 export const useCategoryStore = create((set) => ({
   categories: [],
   isLoading: false,
 
-  fetchCategories: async () => {
+  fetchCategories: async (restId) => {
     set({ isLoading: true });
     try {
-      const { data } = await api.getCategories();
-      set({ categories: data, isLoading: false });
-    } catch (error) {
-      console.error('Error fetching categories:', error);
+      const res = await api.getCategories(restId);
+      set({ categories: res.data });
+      console.log(res.data);
+    } finally {
       set({ isLoading: false });
     }
   },
 
-  createCategory: async (categoryData) => {
+  createCategory: async (data, restId) => {
+    await api.createCategory(data);
+    const res = await api.getCategories(restId);
+    set({ categories: res.data });
+    console.log(res.data);
+  },
+
+  deleteCategory: async (categoryId) => {
+    if (!window.confirm("Are you sure? This will remove the category from all products.")) return;
+
     try {
-      const { data } = await api.createCategory(categoryData);
-      set((state) => ({ categories: [...state.categories, data] }));
-      return data;
+      await api.deleteCategory(categoryId);
+
+      // ✅ FIXED VARIABLE NAME
+      set((state) => ({
+        categories: state.categories.filter((c) => c.id !== categoryId)
+      }));
+
     } catch (error) {
-      console.error('Error creating category:', error);
-      throw error;
+      console.error("Failed to delete category:", error);
+      alert("Only admins can delete categories.");
     }
   }
 }));

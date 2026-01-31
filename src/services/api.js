@@ -1,11 +1,20 @@
 import axios from 'axios';
 
+// const apiClient = axios.create({
+//   // baseURL: 'http://3.110.185.186:8000',
+//   baseURL: 'http://3.110.185.186/api',
+//   // headers: { 'Content-Type': 'application/json' }
+// });
+
 const apiClient = axios.create({
-  // baseURL: 'http://3.110.185.186:8000',
-  baseURL: 'http://3.110.185.186/api',
-  // headers: { 'Content-Type': 'application/json' }
+  baseURL: 'https://indianrestros.com',
 });
 
+
+
+// const apiClient = axios.create({
+//   baseURL: 'http://localhost:8000',
+// });
 
 
 
@@ -24,7 +33,7 @@ export const api = {
   // =========================
   login: (credentials) => apiClient.post('/auth/login', credentials),
 
-  getPublicRestaurantProfile: (country, state, city, identifier) => 
+  getPublicRestaurantProfile: (country, state, city, identifier) =>
     apiClient.get(`/api/v1/public/${country}/${state}/${city}/${identifier}`),
 
   // =========================
@@ -48,10 +57,18 @@ export const api = {
   // =========================
   // Category Endpoints
   // =========================
-  getCategories: () => apiClient.get('/api/v1/categories/'),
+  getCategories: (restId) => {
+    const url = restId ? `/api/v1/categories/?rest_id=${restId}` : '/api/v1/categories/';
+    return apiClient.get(url);
+  },
 
-  createCategory: (data) =>
-    apiClient.post('/api/v1/categories/', data),
+  createCategory: (formData) =>
+    apiClient.post('/api/v1/categories/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  deleteCategory: (categoryId) =>
+    apiClient.delete(`/api/v1/categories/${categoryId}`),
 
   // =========================
   // Product Endpoints
@@ -70,6 +87,9 @@ export const api = {
 
   deleteProductImage: (imageId) =>
     apiClient.delete(`/api/v1/products/images/${imageId}`),
+
+  deleteProduct: (productId) =>
+    apiClient.delete(`/api/v1/products/${productId}`),
 
 
 
@@ -102,10 +122,22 @@ export const api = {
       {
         headers: {
           "Content-Type": "multipart/form-data",
-          
+
         },
       }
     );
-  }
+  },
 
+  // =========================
+  // Media Gallery Endpoints
+  // =========================
+  getMediaGallery: () => apiClient.get('/api/v1/media/'),
+
+  uploadMediaGallery: (data) =>
+    apiClient.post('/api/v1/media/upload/', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  deleteMediaGalleryAsset: (assetId) =>
+    apiClient.delete(`/api/v1/media/${assetId}`),
 };

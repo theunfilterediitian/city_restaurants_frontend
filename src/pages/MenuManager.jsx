@@ -52,7 +52,7 @@ export default function MenuManager() {
             ) : products.length === 0 ? (
               <tr>
                 <td colSpan="5" className="p-20 text-center text-gray-400 italic">
-                   No products found. Click "Add New Dish" to get started.
+                  No products found. Click "Add New Dish" to get started.
                 </td>
               </tr>
             ) : (
@@ -64,10 +64,10 @@ export default function MenuManager() {
                       <div className="h-14 w-14 rounded-lg bg-gray-100 border flex-shrink-0 flex items-center justify-center overflow-hidden relative">
                         {/* Check for image_url or images array */}
                         {p.images?.[0]?.image_url || p.image_url ? (
-                          <img 
-                            src={p.images?.[0]?.image_url || p.image_url} 
-                            alt={p.name} 
-                            className="object-cover h-full w-full" 
+                          <img
+                            src={p.images?.[0]?.image_url || p.image_url}
+                            alt={p.name}
+                            className="object-cover h-full w-full"
                           />
                         ) : (
                           <div className="flex flex-col items-center text-[10px] text-gray-400">
@@ -121,7 +121,7 @@ export default function MenuManager() {
                   {/* Availability Toggle */}
                   <td className="px-6 py-4">
                     <div className="flex flex-col items-center gap-1">
-                      <button 
+                      <button
                         onClick={() => toggleAvailability(p.id, p.available)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${p.available ? 'bg-emerald-500' : 'bg-gray-300'}`}
                       >
@@ -135,7 +135,7 @@ export default function MenuManager() {
 
                   {/* Actions */}
                   <td className="px-6 py-4 text-right">
-                    <button 
+                    <button
                       onClick={() => navigate(`/restaurant/${rest_id}/menu/edit/${p.id}`)}
                       className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-transparent hover:border-indigo-100 group-hover:scale-110"
                       title="Edit Dish"

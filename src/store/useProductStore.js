@@ -26,20 +26,20 @@ export const useProductStore = create((set, get) => ({
     }
   },
 
-// Inside useProductStore.js
-toggleAvailability: async (product_id, current_available) => { // Added current status param
-  try {
-    // We send the OPPOSITE of current availability to the API
-    const { data } = await api.updateAvailability(product_id, !current_available);
-    set((state) => ({
-      products: state.products.map((p) => 
-        p.id === product_id ? { ...p, available: data.available } : p
-      )
-    }));
-  } catch (error) {
-    console.error('Error updating availability:', error);
-  }
-},
+  // Inside useProductStore.js
+  toggleAvailability: async (product_id, current_available) => { // Added current status param
+    try {
+      // We send the OPPOSITE of current availability to the API
+      const { data } = await api.updateAvailability(product_id, !current_available);
+      set((state) => ({
+        products: state.products.map((p) =>
+          p.id === product_id ? { ...p, available: data.available } : p
+        )
+      }));
+    } catch (error) {
+      console.error('Error updating availability:', error);
+    }
+  },
 
   uploadImage: async (product_id, file) => {
     try {
@@ -47,6 +47,18 @@ toggleAvailability: async (product_id, current_available) => { // Added current 
       return data;
     } catch (error) {
       console.error('Error uploading image:', error);
+      throw error;
+    }
+  },
+
+  deleteProduct: async (productId) => {
+    try {
+      await api.deleteProduct(productId);
+      set((state) => ({
+        products: state.products.filter((p) => p.id !== productId)
+      }));
+    } catch (error) {
+      console.error('Error deleting product:', error);
       throw error;
     }
   }

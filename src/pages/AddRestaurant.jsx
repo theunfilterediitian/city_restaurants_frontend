@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../services/api";
-import { ArrowLeft, Save, Building2, AlertCircle, MapPin, Globe, Camera, X } from "lucide-react";
+import { ArrowLeft, Save, Building2, AlertCircle, MapPin, Globe, Camera, X, Phone } from "lucide-react";
 import { Country, State, City } from 'country-state-city';
 
 export default function AddRestaurant() {
@@ -14,7 +14,7 @@ export default function AddRestaurant() {
   const [fetching, setFetching] = useState(isEditMode);
   const [error, setError] = useState("");
   const [isCustomType, setIsCustomType] = useState(false);
-  
+
   // Image Preview State
   const [logoPreview, setLogoPreview] = useState(null);
 
@@ -28,6 +28,8 @@ export default function AddRestaurant() {
     state_code: "",
     city_code: "",
     location: "",
+    phone_number: "",
+    landmark: "",
     logo: null // For the File object
   });
 
@@ -49,13 +51,15 @@ export default function AddRestaurant() {
 
   // --- Effects ---
   useEffect(() => {
-     
+
     if (isEditMode) {
       const loadRestaurantData = async () => {
         try {
           const res = await api.getRestaurantById(id);
           const data = res.data;
-          
+
+          console.log(res.data)
+
           setFormData({
             ...data,
             password: "",
@@ -120,27 +124,29 @@ export default function AddRestaurant() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
+
     try {
       // Use FormData because we are sending a File (logo)
       const data = new FormData();
       data.append("name", formData.name);
       data.append("email", formData.email);
-      
+
       // Only append password if it's filled (important for Edit Mode)
       if (formData.password) data.append("password", formData.password);
-      
+
       data.append("country_code", formData.country_code);
       data.append("state_code", formData.state_code);
       data.append("city_code", formData.city_code);
       data.append("location", formData.location);
+      data.append("phone_number", formData.phone_number || "");
+      data.append("landmark", formData.landmark || "");
       data.append("type", formData.type);
       data.append("pure_veg", formData.pure_veg);
 
       if (formData.logo) {
         data.append("logo", formData.logo);
       }
-      
+
       if (isEditMode) {
         await api.updateRestaurant(id, data);
       } else {
@@ -158,7 +164,7 @@ export default function AddRestaurant() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <button 
+      <button
         onClick={() => navigate(-1)}
         className="flex items-center text-gray-500 hover:text-indigo-600 mb-6 transition font-medium"
       >
@@ -220,7 +226,7 @@ export default function AddRestaurant() {
                     type="text"
                     className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
                 <div>
@@ -230,7 +236,7 @@ export default function AddRestaurant() {
                     type="email"
                     className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
                 <div>
@@ -243,8 +249,21 @@ export default function AddRestaurant() {
                     placeholder={isEditMode ? "••••••••" : "Min. 6 chars"}
                     className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                     value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                      type="tel"
+                      placeholder="+1 234 567 890"
+                      className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                      value={formData.phone_number || ""}
+                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -257,7 +276,7 @@ export default function AddRestaurant() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Type*</label>
-                  <select 
+                  <select
                     className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white transition"
                     onChange={(e) => {
                       if (e.target.value === "Others") {
@@ -283,14 +302,14 @@ export default function AddRestaurant() {
                       placeholder="Specify type..."
                       className="w-full mt-2 px-4 py-2 border border-indigo-200 bg-indigo-50/30 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                       value={formData.type}
-                      onChange={(e) => setFormData({...formData, type: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                     />
                   )}
                 </div>
 
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">Location Details*</label>
-                  <select 
+                  <select
                     required className="w-full px-4 py-2 border rounded-lg text-sm"
                     value={formData.country_code} onChange={handleCountryChange}
                   >
@@ -298,7 +317,7 @@ export default function AddRestaurant() {
                     {countries.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
                   </select>
 
-                  <select 
+                  <select
                     required className="w-full px-4 py-2 border rounded-lg text-sm disabled:bg-gray-100"
                     value={formData.state_code} onChange={handleStateChange} disabled={!states.length}
                   >
@@ -306,7 +325,7 @@ export default function AddRestaurant() {
                     {states.map(s => <option key={s.isoCode} value={s.isoCode}>{s.name}</option>)}
                   </select>
 
-                  <select 
+                  <select
                     required className="w-full px-4 py-2 border rounded-lg text-sm disabled:bg-gray-100"
                     value={formData.city_code} onChange={handleCityChange} disabled={!cities.length}
                   >
@@ -320,15 +339,23 @@ export default function AddRestaurant() {
                       <span className="font-semibold">{formData.location}</span>
                     </div>
                   )}
+
+                  <input
+                    type="text"
+                    placeholder="Landmark (Optional)"
+                    className="w-full px-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={formData.landmark || ""}
+                    onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                  />
                 </div>
 
                 <div className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${formData.pure_veg ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100'}`}>
                   <input
                     type="checkbox" id="pure_veg" className="w-5 h-5 text-green-600 border-gray-300 rounded"
-                    checked={formData.pure_veg} onChange={(e) => setFormData({...formData, pure_veg: e.target.checked})}
+                    checked={formData.pure_veg} onChange={(e) => setFormData({ ...formData, pure_veg: e.target.checked })}
                   />
                   <label htmlFor="pure_veg" className={`text-sm font-bold cursor-pointer ${formData.pure_veg ? 'text-green-700' : 'text-gray-500'}`}>
-                     Pure Veg Outlet
+                    Pure Veg Outlet
                   </label>
                 </div>
               </div>
@@ -341,9 +368,8 @@ export default function AddRestaurant() {
             </p>
             <button
               type="submit" disabled={loading}
-              className={`flex items-center gap-2 text-white px-10 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 disabled:opacity-70 ${
-                isEditMode ? "bg-amber-600 hover:bg-amber-700 shadow-amber-200" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
-              }`}
+              className={`flex items-center gap-2 text-white px-10 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 disabled:opacity-70 ${isEditMode ? "bg-amber-600 hover:bg-amber-700 shadow-amber-200" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
+                }`}
             >
               {loading ? "Processing..." : (
                 <><Save size={18} /> {isEditMode ? "Update Restaurant" : "Register Restaurant"}</>
