@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../services/api";
+import FlyToCartAnimation from "../components/FlyToCartAnimation";
 import {
   MapPin,
   Utensils,
@@ -33,6 +34,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
 
 /* ================= CART STATE ================= */
 function useCartState() {
@@ -94,42 +96,20 @@ function useCartState() {
 
 /* ================= UTILITY COMPONENTS ================= */
 const ImageFallback = ({ name, className = "" }) => {
-  const initials = name
-    ? name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
-    : 'FD';
-
-  const colors = [
-    'bg-gradient-to-br from-orange-100 to-amber-100 text-orange-600',
-    'bg-gradient-to-br from-blue-100 to-cyan-100 text-blue-600',
-    'bg-gradient-to-br from-green-100 to-emerald-100 text-green-600',
-    'bg-gradient-to-br from-purple-100 to-pink-100 text-purple-600',
-    'bg-gradient-to-br from-red-100 to-rose-100 text-red-600',
-  ];
-
-  const colorIndex = name
-    ? name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length
-    : 0;
-
   return (
-    <div className={`${colors[colorIndex]} ${className} flex items-center justify-center`}>
-      {name ? (
-        <>
-          <span className="font-bold text-lg">{initials}</span>
-          <ImageIcon className="absolute opacity-20" size={24} />
-        </>
-      ) : (
-        <ImageIcon size={24} className="opacity-50" />
-      )}
+    <div className={`bg-slate-50 border border-slate-100 flex items-center justify-center relative overflow-hidden ${className}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-slate-100 animate-pulse" />
+      <div className="relative z-10 flex flex-col items-center">
+        <QrCode className="text-slate-200" size={className.includes('w-24') ? 32 : 24} />
+      </div>
     </div>
   );
 };
 
 /* ================= PRODUCT CARD COMPONENT ================= */
-const ProductCard = ({ product, cart, onItemClick }) => {
+const ProductCard = ({ product, cart, onAddTrigger }) => {
   const itemsInCart = cart.items.filter(i => i.productId === product.id);
-  const totalQty = itemsInCart.reduce((s, i) => s + i.qty, 0);
   const hasImage = product.images?.[0]?.image_url;
-  const defaultSize = product.sizes?.[0];
 
   return (
     <div className="bg-white rounded-2xl p-4 border border-gray-200 hover:border-amber-300 transition-all group shadow-sm hover:shadow-md">
@@ -155,77 +135,87 @@ const ProductCard = ({ product, cart, onItemClick }) => {
                 <Flame size={10} className="fill-amber-600" /> Bestseller
               </span>
             )}
-            {product.sizes?.length > 1 && (
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-2 py-0.5 rounded">
-                {product.sizes.length} Options
-              </span>
-            )}
           </div>
         </div>
 
-        {hasImage && (
-          <div className="w-24 h-24 rounded-2xl overflow-hidden border border-slate-100 shadow-sm shrink-0 relative">
+        <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-sm shrink-0 relative">
+          {hasImage ? (
             <img
               src={product.images[0].image_url}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-        )}
+          ) : null}
+          <ImageFallback
+            name={product.name}
+            className={`w-full h-full ${hasImage ? 'hidden' : 'flex'}`}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
       </div>
 
-      {/* Second Row: Price and Button */}
-      <div className="flex items-center justify-between border-t border-slate-50">
-        <div className="flex flex-col">
-          <div className="flex items-baseline gap-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">From</span>
-            <span className="text-xl font-black text-slate-900">₹{defaultSize?.price || 0}</span>
-          </div>
-          <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">
-            {defaultSize?.size_label || 'Regular'}
-          </span>
-        </div>
+      {/* Options Section */}
+      <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+        {product.sizes?.map((size, idx) => {
+          const cartItem = cart.items.find(i => i.productId === product.id && i.sizeLabel === size.size_label);
+          const qty = cartItem?.qty || 0;
 
-        <div>
-          {totalQty > 0 ? (
-            <div className="flex items-center gap-3 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100">
-              <button
-                onClick={() => {
-                  if (product.sizes?.length === 1) {
-                    cart.updateQty(product.id, product.sizes[0].size_label, totalQty - 1);
-                  } else {
-                    onItemClick(product);
-                  }
-                }}
-                className="w-8 h-8 rounded-full bg-white text-amber-600 flex items-center justify-center hover:bg-amber-200 transition-colors shadow-sm"
-              >
-                <Minus size={14} />
-              </button>
-              <span className="font-black text-slate-900 min-w-[20px] text-center text-sm">{totalQty}</span>
-              <button
-                onClick={() => {
-                  if (product.sizes?.length === 1) {
-                    cart.updateQty(product.id, product.sizes[0].size_label, totalQty + 1);
-                  } else {
-                    onItemClick(product);
-                  }
-                }}
-                className="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center shadow-lg shadow-amber-200 transition-all hover:bg-amber-700"
-              >
-                <Plus size={14} />
-              </button>
+          return (
+            <div key={size.id || idx} className="flex items-center justify-between group/opt">
+              <div className="flex flex-col">
+                <span className="text-sm font-black text-slate-800 uppercase tracking-tight group-hover/opt:text-amber-600 transition-colors">
+                  {size.size_label}
+                </span>
+                <span className="text-lg font-black text-slate-900">₹{size.price}</span>
+              </div>
+
+              <div className="min-w-[120px] flex justify-end">
+                {qty > 0 ? (
+                  <div className="flex items-center gap-3 bg-amber-50 px-2 py-1 rounded-xl border border-amber-100 shadow-sm animate-fadeIn">
+                    <button
+                      onClick={() => cart.updateQty(product.id, size.size_label, qty - 1)}
+                      className="w-8 h-8 rounded-full bg-white text-amber-600 flex items-center justify-center hover:bg-amber-100 transition-all border border-amber-100"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="font-black text-slate-900 w-6 text-center text-sm">{qty}</span>
+                    <button
+                      onClick={(e) => {
+                        cart.updateQty(product.id, size.size_label, qty + 1);
+                        onAddTrigger?.(e);
+                      }}
+                      className="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center shadow-md shadow-amber-200 transition-all hover:bg-amber-700"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      cart.addItem({
+                        productId: product.id,
+                        name: product.name,
+                        price: size.price,
+                        sizeLabel: size.size_label,
+                        image: product.images?.[0]?.image_url,
+                        qty: 1
+                      });
+                      onAddTrigger?.(e);
+                    }}
+                    className="h-10 px-6 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-600 transition-all flex items-center gap-2 group/btn active:scale-95"
+                  >
+                    <Plus size={14} className="group-hover/btn:rotate-90 transition-transform" />
+                    Add
+                  </button>
+                )}
+              </div>
             </div>
-          ) : (
-            <button
-              onClick={() => onItemClick(product)}
-              className="h-10 px-8 bg-amber-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-amber-700 hover:shadow-lg hover:shadow-amber-200 transition-all flex items-center gap-2 group/btn active:scale-95"
-            >
-              <Plus size={16} className="group-hover/btn:rotate-90 transition-transform" />
-              Add
-            </button>
-          )}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -236,7 +226,6 @@ export default function PublicRestaurantView() {
   const { country, state, city, identifier } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [modalItem, setModalItem] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [vegFilter, setVegFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -245,29 +234,32 @@ export default function PublicRestaurantView() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const cart = useCartState();
+  const flyToCartRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
-      const res = await api.getPublicRestaurantProfile(
-        country,
-        state,
-        city,
-        identifier
-      );
-      setData(res.data);
-      setLoading(false);
+      try {
+        const res = await api.getPublicRestaurantProfile(
+          country,
+          state,
+          city,
+          identifier
+        );
+        setData(res.data);
+        setLoading(false);
 
-      console.log(res.data)
-
-      // Initialize all categories as expanded
-      if (res.data?.products) {
-        const categories = {};
-        res.data.products.forEach(product => {
-          product.categories?.forEach(cat => {
-            categories[cat.name] = true;
+        // Initialize all categories as expanded
+        if (res.data?.products) {
+          const categories = {};
+          res.data.products.forEach(product => {
+            product.categories?.forEach(cat => {
+              categories[cat.name] = true;
+            });
           });
-        });
-        setExpandedCategories(categories);
+          setExpandedCategories(categories);
+        }
+      } catch (err) {
+        setLoading(false);
       }
     };
     load();
@@ -612,7 +604,7 @@ export default function PublicRestaurantView() {
                           key={product.id}
                           product={product}
                           cart={cart}
-                          onItemClick={setModalItem}
+                          onAddTrigger={(e) => flyToCartRef.current?.trigger(e.clientX, e.clientY)}
                         />
                       ))}
                     </div>
@@ -674,14 +666,7 @@ export default function PublicRestaurantView() {
         )}
       </>
 
-      {/* Product Modal */}
-      {modalItem && (
-        <ProductModal
-          item={modalItem}
-          cart={cart}
-          onClose={() => setModalItem(null)}
-        />
-      )}
+      <FlyToCartAnimation ref={flyToCartRef} />
 
       {/* Info Sidebar */}
       <InfoSidebar
@@ -764,18 +749,20 @@ function InfoSidebar({ isOpen, onClose, restaurant }) {
               </div>
 
               {/* Contact Info Section */}
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Connect with us</h4>
+              {restaurant.phone_number && (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Connect with us</h4>
 
-                <div className="space-y-2">
-                  <a href={`tel:${restaurant.phone || '+91 8543832619'}`} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 hover:border-primary hover:shadow-lg hover:shadow-primary-shadow transition-all group">
-                    <div className="w-8 h-8 rounded-lg bg-primary-extraLight flex items-center justify-center text-primary transition-colors border border-primary-light/50">
-                      <Phone size={14} />
-                    </div>
-                    <span className="text-xs font-black text-gray-600 uppercase tracking-wider">{restaurant.phone || '+91 8543832619'}</span>
-                  </a>
+                  <div className="space-y-2">
+                    <a href={`tel:${restaurant.phone_number}`} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 hover:border-primary hover:shadow-lg hover:shadow-primary-shadow transition-all group">
+                      <div className="w-8 h-8 rounded-lg bg-primary-extraLight flex items-center justify-center text-primary transition-colors border border-primary-light/50">
+                        <Phone size={14} />
+                      </div>
+                      <span className="text-xs font-black text-gray-600 uppercase tracking-wider">{restaurant.phone_number}</span>
+                    </a>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Delivery Details */}
               <div className="p-5 bg-slate-900 rounded-[2rem] text-white relative overflow-hidden">
@@ -858,199 +845,7 @@ function InfoSidebar({ isOpen, onClose, restaurant }) {
   );
 }
 
-/* ================= PRODUCT MODAL ================= */
-function ProductModal({ item, cart, onClose }) {
-  const [selectedSize, setSelectedSize] = useState(item.sizes?.[0] || null);
-  const [quantity, setQuantity] = useState(1);
 
-  const itemsInCart = cart.items.filter(i =>
-    i.productId === item.id && i.sizeLabel === selectedSize?.size_label
-  );
-  const currentQty = itemsInCart.reduce((sum, i) => sum + i.qty, 0);
-  const hasImage = item.images?.[0]?.image_url;
-
-  const handleAddToCart = () => {
-    if (selectedSize) {
-      cart.addItem({
-        productId: item.id,
-        name: item.name,
-        image: item.images?.[0]?.image_url,
-        sizeLabel: selectedSize.size_label,
-        price: selectedSize.price,
-        qty: quantity,
-      });
-    }
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center animate-fadeIn">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      <div className="relative w-full max-w-2xl bg-white rounded-t-3xl md:rounded-3xl max-h-[90vh] overflow-hidden animate-slide-up">
-        {/* Product Header */}
-        <div className="p-6 border-b">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              {hasImage ? (
-                <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200">
-                  <img
-                    src={item.images[0].image_url}
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerHTML = `
-                        <div class="w-full h-full bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
-                          <span class="text-lg font-bold text-orange-600">${item.name.charAt(0)}</span>
-                        </div>
-                      `;
-                    }}
-                  />
-                </div>
-              ) : (
-                <ImageFallback
-                  name={item.name}
-                  className="w-16 h-16 rounded-xl border border-gray-200"
-                />
-              )}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">{item.name}</h2>
-                <div className="flex items-center gap-2">
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${item.veg
-                    ? 'bg-green-50 text-green-700 border border-green-200'
-                    : 'bg-red-50 text-red-700 border border-red-200'
-                    }`}>
-                    {item.veg ? '🟢 Veg' : '🔴 Non-Veg'}
-                  </div>
-                  {item.is_popular && (
-                    <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-200">
-                      Popular
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-            >
-              <X className="text-gray-700" size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Product Details */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-16rem)]">
-          {item.description && (
-            <div className="mb-6">
-              <h3 className="font-bold text-gray-900 mb-2">Description</h3>
-              <p className="text-gray-600">{item.description}</p>
-            </div>
-          )}
-
-          {/* Size Selection */}
-          {item.sizes?.length > 1 && (
-            <div className="mb-6">
-              <h3 className="font-bold text-gray-900 mb-3">Choose Size</h3>
-              <div className="space-y-3">
-                {item.sizes.map((size) => (
-                  <button
-                    key={size.id}
-                    onClick={() => setSelectedSize(size)}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition-all flex justify-between items-center ${selectedSize?.id === size.id
-                      ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50'
-                      : 'border-gray-200 hover:border-orange-200 hover:bg-orange-50/30'
-                      }`}
-                  >
-                    <div>
-                      <div className="font-bold text-gray-900">{size.size_label}</div>
-                      <div className="text-sm text-gray-500">Portion size details</div>
-                    </div>
-                    <div className="font-bold text-orange-600 text-lg">₹{size.price}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Quantity Selector */}
-          <div className="mb-6">
-            <h3 className="font-bold text-gray-900 mb-3">Quantity</h3>
-            <div className="flex items-center justify-between max-w-xs bg-gray-50 p-4 rounded-2xl">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-12 h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center hover:border-orange-500 hover:bg-orange-50 transition-all"
-              >
-                <Minus className="text-gray-600" size={20} />
-              </button>
-
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">{quantity}</div>
-                <div className="text-sm text-gray-500">Quantity</div>
-              </div>
-
-              <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="w-12 h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center hover:border-orange-500 hover:bg-orange-50 transition-all"
-              >
-                <Plus className="text-gray-600" size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Price Summary */}
-          <div className="bg-gray-50 p-4 rounded-2xl">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">Price per item</span>
-              <span className="font-bold text-gray-900">₹{selectedSize?.price || 0}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total</span>
-              <span className="text-2xl font-bold text-orange-600">
-                ₹{(selectedSize?.price || 0) * quantity}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="border-t p-6 bg-white">
-          {currentQty > 0 ? (
-            <div className="flex gap-4">
-              <button
-                onClick={() => cart.removeItem(item.id, selectedSize?.size_label)}
-                className="flex-1 px-6 py-4 border-2 border-red-500 text-red-600 rounded-xl font-bold hover:bg-red-50 transition-colors"
-              >
-                Remove from Cart
-              </button>
-              <button
-                onClick={() => {
-                  cart.updateQty(item.id, selectedSize?.size_label, currentQty + quantity);
-                  onClose();
-                }}
-                className="flex-1 px-6 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold hover:shadow-lg transition-all"
-              >
-                Add {quantity} More
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleAddToCart}
-              className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:scale-105 transition-all active:scale-95"
-            >
-              Add to Cart • ₹{(selectedSize?.price || 0) * quantity}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ================= CART MODAL ================= */
 function CartModal({ cart, onClose, restaurantName }) {
@@ -1127,8 +922,14 @@ function CartModal({ cart, onClose, restaurantName }) {
                             <span className="px-2 py-0.5 bg-slate-100 rounded-md text-[9px] font-black text-slate-500 uppercase tracking-wider">{item.sizeLabel}</span>
                           </div>
                         </div>
-                        <div className="font-black text-gray-900 text-base shrink-0 ml-4 group-hover:text-primary transition-colors">
-                          ₹{item.price * item.qty}
+                        <div className="text-right shrink-0 ml-4">
+                          <div className="font-black text-gray-900 text-base group-hover:text-primary transition-colors">
+                            {item.qty} × ₹{item.price}
+                          </div>
+                          <div className="text-[15px] font-black text-slate-400 uppercase tracking-tighter">
+
+                            ₹{item.price * item.qty}
+                          </div>
                         </div>
                       </div>
 
