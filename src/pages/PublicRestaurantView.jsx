@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { api } from "../services/api";
 import {
   MapPin,
@@ -24,6 +24,13 @@ import {
   Image as ImageIcon,
   Hash,
   AlertCircle,
+  Menu,
+  Phone,
+  Instagram,
+  Smartphone,
+  Info,
+  Globe,
+  QrCode,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -235,6 +242,7 @@ export default function PublicRestaurantView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategories, setExpandedCategories] = useState({});
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const cart = useCartState();
 
@@ -440,6 +448,13 @@ export default function PublicRestaurantView() {
                 </div>
               </div>
             </div>
+
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-primary-light hover:text-primary transition-all border border-gray-100"
+            >
+              <Menu size={24} />
+            </button>
           </div>
         </div>
       </div>
@@ -667,7 +682,179 @@ export default function PublicRestaurantView() {
           onClose={() => setModalItem(null)}
         />
       )}
+
+      {/* Info Sidebar */}
+      <InfoSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        restaurant={restaurant}
+      />
     </div>
+  );
+}
+
+/* ================= INFO SIDEBAR ================= */
+function InfoSidebar({ isOpen, onClose, restaurant }) {
+  const brandName = "Indian Restros";
+  const playStoreUrl = "#"; // Replace with real Play Store link
+  const instagramUrl = "https://instagram.com/indianrestros";
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end animate-fadeIn">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={onClose}
+          />
+
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="relative w-full max-w-[300px] bg-white h-full flex flex-col shadow-2xl overflow-hidden"
+          >
+            {/* Header */}
+            <div className="p-6 border-b flex items-center justify-between">
+              <h2 className="text-lg font-black text-gray-900 uppercase tracking-tight">Information</h2>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+              >
+                <X size={16} className="text-gray-600" />
+              </button>
+            </div>
+
+            {/* Sidebar Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide">
+
+              {/* Restaurant Info Card */}
+              <div className="space-y-4">
+                <div className="relative group">
+                  <div className="w-24 h-24 rounded-[2rem] overflow-hidden border-4 border-slate-50 shadow-xl mx-auto group-hover:scale-105 transition-transform duration-500">
+                    {restaurant.logo_url ? (
+                      <img src={restaurant.logo_url} alt={restaurant.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-primary-light flex items-center justify-center text-primary font-black text-4xl">
+                        {restaurant.name?.[0]}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{restaurant.name}</h3>
+                  <div className="flex items-center justify-center gap-2 mt-1 px-4">
+                    <MapPin size={12} className="text-primary shrink-0" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">{restaurant.location}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-6">
+                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                    <span className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Cuisine</span>
+                    <span className="text-[10px] font-black text-gray-700 uppercase">{restaurant.type || 'Dining'}</span>
+                  </div>
+                  <div className="p-3 bg-green-50/50 rounded-2xl border border-green-100 text-center">
+                    <span className="block text-[8px] font-black text-green-400 uppercase tracking-widest mb-1">Status</span>
+                    <span className="text-[10px] font-black text-green-600 uppercase">Open Now</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Info Section */}
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Connect with us</h4>
+
+                <div className="space-y-2">
+                  <a href={`tel:${restaurant.phone || '+91 8543832619'}`} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 hover:border-primary hover:shadow-lg hover:shadow-primary-shadow transition-all group">
+                    <div className="w-8 h-8 rounded-lg bg-primary-extraLight flex items-center justify-center text-primary transition-colors border border-primary-light/50">
+                      <Phone size={14} />
+                    </div>
+                    <span className="text-xs font-black text-gray-600 uppercase tracking-wider">{restaurant.phone || '+91 8543832619'}</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Delivery Details */}
+              <div className="p-5 bg-slate-900 rounded-[2rem] text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 rounded-full blur-2xl -mr-12 -mt-12" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+                      <ShoppingBag size={14} className="text-white" />
+                    </div>
+                    <h4 className="text-[10px] font-black uppercase tracking-widest">Home Delivery</h4>
+                  </div>
+                  <p className="text-xs font-bold text-gray-400 mb-4 leading-relaxed">
+                    Order directly and get delivery within <span className="text-white font-black">{restaurant.delivery_radius || '5 KM'}</span> radius.
+                  </p>
+                  <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest bg-white/5 p-2 rounded-lg border border-white/10 w-fit">
+                    <ClockIcon size={12} />
+                    30-45 Mins
+                  </div>
+                </div>
+              </div>
+
+              {/* Get The App & Social */}
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-3 px-1">
+                  <Smartphone className="text-primary" size={16} />
+                  <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest leading-none">The Experience</h4>
+                </div>
+
+                {/* Play Store Card */}
+                <a href={playStoreUrl} className="block group">
+                  <div className="relative overflow-hidden bg-slate-900 p-5 rounded-[2rem] border border-white/10 shadow-2xl transition-all hover:scale-[1.02] active:scale-95 group-hover:shadow-primary-shadow/20">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16" />
+                    <div className="relative z-10 flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-inner shrink-0">
+                        <img
+                          src="https://www.vectorlogo.zone/logos/google_play/google_play-icon.svg"
+                          alt="Google Play"
+                          className="w-7 h-7"
+                        />
+                      </div>
+                      <div>
+                        <span className="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-0.5">Available on</span>
+                        <span className="block text-sm font-black text-white uppercase tracking-tight leading-none">Google Play</span>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+
+                {/* Instagram Card */}
+                <a href={instagramUrl} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-5 bg-white rounded-[2rem] border border-slate-100 hover:border-primary hover:shadow-xl hover:shadow-primary-shadow transition-all group">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-100 group-hover:scale-110 transition-transform">
+                      <Instagram size={20} />
+                    </div>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-0.5">Follow us</span>
+                    <span className="block text-sm font-black text-gray-900 tracking-tight group-hover:text-primary transition-colors uppercase">@indianrestros</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            {/* Sidebar Footer */}
+            <div className="p-6 bg-slate-50 border-t border-slate-100">
+              <div className="flex flex-col items-center">
+                <div className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">Powered By</div>
+                <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                  <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary-shadow">
+                    <QrCode className="text-white" size={14} />
+                  </div>
+                  <span className="text-sm font-black text-gray-900 tracking-tighter uppercase">{brandName}</span>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -867,6 +1054,7 @@ function ProductModal({ item, cart, onClose }) {
 
 /* ================= CART MODAL ================= */
 function CartModal({ cart, onClose, restaurantName }) {
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const total = cart.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
   const totalItems = cart.items.reduce((sum, item) => sum + item.qty, 0);
   const deliveryFee = total < 300 ? 40 : 0;
@@ -897,104 +1085,165 @@ function CartModal({ cart, onClose, restaurantName }) {
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto bg-slate-50/50 scrollbar-hide">
           {cart.items.length > 0 ? (
-            <div className="space-y-6">
-              {cart.items.map((item) => (
-                <div key={`${item.productId}-${item.sizeLabel}`} className="flex gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-gray-300 bg-white">
-                    {item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.parentElement.innerHTML = `
-                            <div class="w-full h-full bg-primary-light flex items-center justify-center">
-                              <span class="text-sm font-bold text-primary">${item.name.charAt(0)}</span>
-                            </div>
-                          `;
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-primary-light flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary">{item.name.charAt(0)}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 truncate">{item.name}</h3>
-                        <p className="text-xs text-gray-500 mt-1">{item.sizeLabel}</p>
-                      </div>
-                      <div className="font-bold text-gray-900 text-lg shrink-0 ml-4">
-                        ₹{item.price * item.qty}
-                      </div>
+            <div className="p-6 space-y-4">
+              {cart.items.map((item, idx) => (
+                <div
+                  key={`${item.productId}-${item.sizeLabel}`}
+                  className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100/50 hover:shadow-md transition-shadow group animate-slide-up"
+                  style={{ animationDelay: `${idx * 0.05}s` }}
+                >
+                  <div className="flex gap-4">
+                    {/* Item Image */}
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden shrink-0 bg-slate-100 group-hover:scale-105 transition-transform duration-500 shadow-inner border border-slate-100">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.innerHTML = `
+                              <div class="w-full h-full bg-primary/5 flex items-center justify-center">
+                                <span class="text-xl font-black text-primary/30">${item.name.charAt(0)}</span>
+                              </div>
+                            `;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-primary/5 flex items-center justify-center">
+                          <span className="text-xl font-black text-primary/30">{item.name.charAt(0)}</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-lg border">
-                        <button
-                          onClick={() => cart.updateQty(item.productId, item.sizeLabel, item.qty - 1)}
-                          className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600 hover:text-red-600"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="font-bold text-gray-900 w-6 text-center">{item.qty}</span>
-                        <button
-                          onClick={() => cart.updateQty(item.productId, item.sizeLabel, item.qty + 1)}
-                          className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600 hover:text-green-600"
-                        >
-                          <Plus size={14} />
-                        </button>
+                    {/* Item Details */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-black text-gray-900 truncate leading-tight uppercase text-sm tracking-tight">{item.name}</h3>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className="px-2 py-0.5 bg-slate-100 rounded-md text-[9px] font-black text-slate-500 uppercase tracking-wider">{item.sizeLabel}</span>
+                          </div>
+                        </div>
+                        <div className="font-black text-gray-900 text-base shrink-0 ml-4 group-hover:text-primary transition-colors">
+                          ₹{item.price * item.qty}
+                        </div>
                       </div>
 
-                      <button
-                        onClick={() => cart.removeItem(item.productId, item.sizeLabel)}
-                        className="text-red-500 hover:text-red-700 text-sm font-medium px-3 py-1.5 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        Remove
-                      </button>
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+                        {/* Quantity Controls */}
+                        <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-100">
+                          <button
+                            onClick={() => cart.updateQty(item.productId, item.sizeLabel, item.qty - 1)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center bg-white shadow-sm hover:text-red-600 transition-all active:scale-90"
+                          >
+                            <Minus size={14} strokeWidth={3} />
+                          </button>
+                          <span className="font-black text-gray-900 w-10 text-center text-xs">{item.qty}</span>
+                          <button
+                            onClick={() => cart.updateQty(item.productId, item.sizeLabel, item.qty + 1)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center bg-white shadow-sm hover:text-green-600 transition-all active:scale-90"
+                          >
+                            <Plus size={14} strokeWidth={3} />
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => cart.removeItem(item.productId, item.sizeLabel)}
+                          className="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center text-rose-500 hover:bg-rose-100 transition-colors"
+                          title="Remove Item"
+                        >
+                          <X size={14} strokeWidth={3} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center p-6">
-              <div className="w-40 h-40 mb-6">
-                <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center">
-                  <ShoppingBasket className="text-gray-300" size={80} />
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 relative overflow-hidden">
+              {/* Decorative background element */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -z-10" />
+
+              <div className="w-48 h-48 mb-10 relative">
+                <div className="absolute inset-0 bg-white rounded-[3rem] shadow-2xl rotate-6 animate-pulse opacity-50" />
+                <div className="relative w-full h-full bg-white rounded-[3rem] shadow-xl border border-slate-50 flex items-center justify-center -rotate-3 transition-transform hover:rotate-0 duration-500">
+                  <div className="relative">
+                    <ShoppingBag className="text-slate-100" size={100} strokeWidth={1} />
+                    <XCircle className="absolute -top-2 -right-2 text-rose-400 fill-white" size={32} />
+                  </div>
                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                {[
-                  "Bhukkad! Cart khali kyun hai?",
-                  "Khaali bag leke ghoomoge?",
-                  "Pet pooja shuru karein?",
-                  "Menu dekhne ke paise nahi hain!",
-                  "Wait, dieting chal rahi hai?",
-                  "Kitchen band hone wala hai, jaldi!"
-                ][Math.floor(Math.random() * 6)]}
-              </h3>
-              <p className="text-gray-600 mb-8">
-                {[
-                  "Kuch to add karo, kitchen wale free baithe hain!",
-                  "Sharam karo, itna achha menu aur cart khali?",
-                  "Order nahi karoge toh waiter gussa ho jayega!",
-                  "Ghar se khana khake aaye ho kya?",
-                  "Sirf photos dekhne aaye ho?",
-                  "Paisa hai toh kharche karo, kal kisne dekha!"
-                ][Math.floor(Math.random() * 6)]}
-              </p>
+
+              <div className="space-y-4 max-w-[280px]">
+                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tightest leading-none bg-gradient-to-r from-gray-900 to-gray-500 bg-clip-text text-transparent">
+                  {[
+                    "Bhukkad! Cart khali kyun hai?",
+                    "Khaali bag leke ghoomoge?",
+                    "Pet pooja shuru karein?",
+                    "Menu dekhne ke paise nahi hain!",
+                    "Wait, dieting chal rahi hai?",
+                    "Kitchen band hone wala hai, jaldi!",
+                    "Wallet ghar pe bhul gaye kya?",
+                    "Itna sasta menu aur cart khali?",
+                    "Selection nahi ho raha?",
+                    "Shauk sardaar ke, pocket bekaar ke?",
+                    "Bura na maano, cart khaali hai!",
+                    "Oye! Kuch toh mangao!",
+                    "Bas window shopping karoge?",
+                    "Kitchen wale bor ho rahe hain!",
+                    "Arey bhai bhai bhai, cart khali?",
+                    "Dieting kal, aaj kha lo!",
+                    "Itna sannata kyun hai cart mein?",
+                    "Khane ki khushboo nahi aa rahi?",
+                    "Waiter wait kar raha hai, jaldi!",
+                    "Kya aapko bhook nahi lagti?",
+                    "Cart ko thoda pyar do, bhar dalo!",
+                    "Khali cart achha nahi lagta!",
+                    "Jaldi mangao, padosi kha jayenge!",
+                    "Pet mein chuhe daud rahe hain?",
+                    "Selection solid hai, cart khali kyun?"
+                  ][Math.floor(Math.random() * 25)]}
+                </h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-relaxed">
+                  {[
+                    "Kuch to add karo, kitchen wale free baithe hain!",
+                    "Sharam karo, itna achha menu aur cart khali?",
+                    "Order nahi karoge toh waiter gussa ho jayega!",
+                    "Ghar se khana khake aaye ho kya?",
+                    "Sirf photos dekhne aaye ho?",
+                    "Paisa hai toh kharche karo, kal kisne dekha!",
+                    "Ek paneer tikka toh banta hai boss!",
+                    "Dessert section check kiya? Gazab hai!",
+                    "Order kar do, warna padosi ka bill bharoge!",
+                    "Kitchen staff cricket khel raha hai, kaam do!",
+                    "Itne mein toh sirf paani milega, add karo!",
+                    "Chef ne khaas tumhare liye masala peesa hai!",
+                    "Cart khali rakhne ke paise nahi milte!",
+                    "Pet khush, tum khush, menu khush!",
+                    "Order kar do, bhook zalim cheez hai!",
+                    "Gym kal se, aaj toh bas party!",
+                    "Menu itna bada, selection itna kam? No way!",
+                    "Kitchen se mast khushboo aa rahi hai, check karo!",
+                    "2-min maggi nahi, asli khana milega!",
+                    "Ek item add karo, cart ko bura lag raha hai!",
+                    "Free mein gyan milta hai, menu check karo!",
+                    "Chef aaj mood mein hai, mangao toh sahi!",
+                    "Bhook lag rahi hai na? Humein toh lag rahi hai!",
+                    "Cart bhar do, dil jeet lo!",
+                    "Itna sochna kya? Jo pasand hai, add karo!"
+                  ][Math.floor(Math.random() * 25)]}
+                </p>
+              </div>
+
               <button
                 onClick={onClose}
-                className="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:shadow-lg hover:scale-105 transition-all"
+                className="mt-10 px-12 py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] hover:bg-black hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-slate-200"
               >
-                Browse Menu
+                Start Exploring
               </button>
             </div>
           )}
@@ -1025,20 +1274,56 @@ function CartModal({ cart, onClose, restaurantName }) {
                   "Paise Hain Na? Order Karein?",
                   "Kamaal Hai, Itne Mein Kya Hoga?",
                   "Pet Bharega Itne Mein? Aur Mangao!",
-                  "Sahi Hai, Dieting Chalu Hai Shayad!"
-                ][Math.floor(Math.random() * 10)]}
+                  "Sahi Hai, Dieting Chalu Hai Shayad!",
+                  "Oye, Order toh kar, waiter bura maan jayega!",
+                  "Bill dekh ke dar gaye kya? mangao mangao!",
+                  "Thoda aur chakh lo, maza aa jayega!",
+                  "Bas itne mein hi dher? aur add karo!",
+                  "Full plate khao, half mein kya rakha hai!",
+                  "Desert bhul gaye? Sahi hai!",
+                  "Order kar do, bhook ka sawal hai!",
+                  "Chef khush ho jayega thoda aur mangao!",
+                  "Itne mein toh sirf starter hota hai!",
+                  "Party abhi baaki hai, aur add karo!",
+                  "Thoda aur, thoda aur... maza aayega!",
+                  "Kha lo jee bhar ke, bill toh bharna hi hai!",
+                  "Dieting ko goli maaro, order karo!",
+                  "Waiter tumhare liye khada hai, order kar do!",
+                  "Cart mast lag raha hai, par thoda adha hai!"
+                ][Math.floor(Math.random() * 25)]}
               </button>
 
-              <button
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to clear your cart?')) {
-                    cart.clear();
-                  }
-                }}
-                className="w-full py-3 border-2 border-gray-200 text-gray-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-colors"
-              >
-                Clear Cart
-              </button>
+              {showClearConfirm ? (
+                <div className="flex items-center gap-3 p-4 bg-red-50 rounded-xl border border-red-100 animate-fadeIn">
+                  <div className="flex-1">
+                    <p className="text-[10px] font-black text-red-600 uppercase tracking-widest leading-tight">Remove all items?</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        cart.clear();
+                        setShowClearConfirm(false);
+                      }}
+                      className="px-4 py-2 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
+                    >
+                      Yes, Clear
+                    </button>
+                    <button
+                      onClick={() => setShowClearConfirm(false)}
+                      className="px-4 py-2 bg-white text-gray-500 text-[10px] font-black uppercase tracking-widest rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="w-full py-3 border-2 border-gray-200 text-gray-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-colors"
+                >
+                  Clear Cart
+                </button>
+              )}
             </div>
           </div>
         )}

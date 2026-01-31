@@ -233,9 +233,9 @@ export default function Home({ isAuthenticated }) {
                     <div>
                         <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-8">Connect</p>
                         <ul className="space-y-4">
-                            <li className="text-sm text-slate-500 font-bold uppercase italic tracking-tight">Instagram</li>
-                            <li className="text-sm text-slate-500 font-bold uppercase italic tracking-tight">LinkedIn</li>
+                            <li><a href="https://instagram.com/indianrestros" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-500 hover:text-amber-600 font-bold transition-colors uppercase italic tracking-tight">Instagram</a></li>
                             <li className="text-sm text-slate-500 font-bold uppercase italic tracking-tight">Technical Support</li>
+                            <li><a href="tel:+918543832619" className="text-sm text-slate-900 font-black tracking-widest hover:text-amber-600 transition-colors">+91 8543832619</a></li>
                         </ul>
                     </div>
                 </div>
