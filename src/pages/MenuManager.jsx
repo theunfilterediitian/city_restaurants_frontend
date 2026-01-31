@@ -1,16 +1,27 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProductStore } from '../store/useProductStore';
-import { Edit3, Plus, ImageOff, CheckCircle2, XCircle } from 'lucide-react';
+import { Edit3, Plus, ImageOff, Search } from 'lucide-react';
 
 export default function MenuManager() {
   const navigate = useNavigate();
   const { rest_id } = useParams();
+  const [searchTerm, setSearchTerm] = useState('');
   const { products, fetchProducts, toggleAvailability, isLoading } = useProductStore();
 
   useEffect(() => {
     if (rest_id) fetchProducts(rest_id);
   }, [rest_id, fetchProducts]);
+
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) return products;
+    const term = searchTerm.toLowerCase();
+    return products.filter(p =>
+      p.name.toLowerCase().includes(term) ||
+      p.description?.toLowerCase().includes(term) ||
+      p.categories?.some(cat => cat.name.toLowerCase().includes(term))
+    );
+  }, [products, searchTerm]);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -20,12 +31,27 @@ export default function MenuManager() {
           <h2 className="text-2xl font-bold text-gray-900">Menu Items</h2>
           <p className="text-gray-500 text-sm">Manage dishes, sizes, and dietary preferences.</p>
         </div>
-        <button
-          onClick={() => navigate(`/restaurant/${rest_id}/menu/add`)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-md active:scale-95"
-        >
-          <Plus size={18} /> Add New Dish
-        </button>
+        <div className="flex flex-col md:flex-row flex-1 gap-4 items-center justify-between w-full lg:w-auto">
+          <div className="relative w-full md:w-80">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <Search size={18} />
+            </div>
+            <input
+              type="text"
+              placeholder="Search dishes..."
+              className="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <button
+            onClick={() => navigate(`/restaurant/${rest_id}/menu/add`)}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-md active:scale-95 whitespace-nowrap w-full md:w-auto justify-center"
+          >
+            <Plus size={18} /> Add New Dish
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -49,14 +75,14 @@ export default function MenuManager() {
                   </div>
                 </td>
               </tr>
-            ) : products.length === 0 ? (
+            ) : filteredProducts.length === 0 ? (
               <tr>
                 <td colSpan="5" className="p-20 text-center text-gray-400 italic">
-                  No products found. Click "Add New Dish" to get started.
+                  {searchTerm ? `No dishes found matching "${searchTerm}"` : 'No products found. Click "Add New Dish" to get started.'}
                 </td>
               </tr>
             ) : (
-              products.map((p) => (
+              filteredProducts.map((p) => (
                 <tr key={p.id} className="hover:bg-gray-50/80 transition-colors group">
                   {/* Product Column */}
                   <td className="px-6 py-4">

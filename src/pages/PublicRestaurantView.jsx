@@ -431,6 +431,12 @@ export default function PublicRestaurantView() {
                       {restaurant.type || 'Restaurant'}
                     </span>
                   </div>
+                  {restaurant.phone_number && (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 rounded-md border border-indigo-100">
+                      <Phone size={12} className="text-indigo-600" />
+                      <span className="text-[10px] font-black text-indigo-700">{restaurant.phone_number}</span>
+                    </div>
+                  )}
                   {restaurant.rating && (
                     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-50 rounded-md border border-green-100">
                       <Star size={12} className="text-green-600 fill-green-600" />
@@ -753,6 +759,7 @@ function InfoSidebar({ isOpen, onClose, restaurant }) {
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Connect with us</h4>
 
+<<<<<<< Updated upstream
                   <div className="space-y-2">
                     <a href={`tel:${restaurant.phone_number}`} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 hover:border-primary hover:shadow-lg hover:shadow-primary-shadow transition-all group">
                       <div className="w-8 h-8 rounded-lg bg-primary-extraLight flex items-center justify-center text-primary transition-colors border border-primary-light/50">
@@ -761,6 +768,15 @@ function InfoSidebar({ isOpen, onClose, restaurant }) {
                       <span className="text-xs font-black text-gray-600 uppercase tracking-wider">{restaurant.phone_number}</span>
                     </a>
                   </div>
+=======
+                <div className="space-y-2">
+                  <a href={`tel:${restaurant.phone_number || '+91 8543832619'}`} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 hover:border-primary hover:shadow-lg hover:shadow-primary-shadow transition-all group">
+                    <div className="w-8 h-8 rounded-lg bg-primary-extraLight flex items-center justify-center text-primary transition-colors border border-primary-light/50">
+                      <Phone size={14} />
+                    </div>
+                    <span className="text-xs font-black text-gray-600 uppercase tracking-wider">{restaurant.phone_number || '+91 8543832619'}</span>
+                  </a>
+>>>>>>> Stashed changes
                 </div>
               )}
 
