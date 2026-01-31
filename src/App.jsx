@@ -1,132 +1,211 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-import { lazy, Suspense } from "react";
+// Pages
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import AdminDashboard from "./pages/AdminDashboard";
+import RestaurantDashboard from "./pages/RestaurantDashboard";
+import MenuManager from "./pages/MenuManager";
+import CategoryManager from "./pages/CategoryManager";
+import RestaurantManager from "./pages/RestaurantManager";
+import AddRestaurant from "./pages/AddRestaurant";
+import AddProduct from "./pages/AddProduct";
+import TestUpload from "./pages/testupload";
+import PublicRestaurantView from "./pages/PublicRestaurantView";
+import BrowseRestaurants from "./pages/BrowseRestaurants";
 
-// Pages (Lazy Loaded)
-const Login = lazy(() => import("./pages/Login"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const RestaurantDashboard = lazy(() => import("./pages/RestaurantDashboard"));
-const MenuManager = lazy(() => import("./pages/MenuManager"));
-const CategoryManager = lazy(() => import("./pages/CategoryManager"));
-const RestaurantManager = lazy(() => import("./pages/RestaurantManager"));
-const AddRestaurant = lazy(() => import("./pages/AddRestaurant"));
-const AddProduct = lazy(() => import("./pages/AddProduct"));
-const TestUpload = lazy(() => import("./pages/testupload"));
-const PublicRestaurantView = lazy(() => import("./pages/PublicRestaurantView"));
-const BrowseRestaurants = lazy(() => import("./pages/BrowseRestaurants"));
-const MediaGallery = lazy(() => import("./pages/MediaGallery"));
-
-// Components
+// Layout
 import Layout from "./components/Layout";
 
-function ProtectedRoute({ isAllowed, children }) {
-  if (!isAllowed) return <Navigate to="/" replace />;
+/* =========================
+   PROTECTED ROUTE
+========================= */
+function ProtectedRoute({ isAuthenticated, allowRole, userRole, children }) {
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (allowRole && userRole !== allowRole) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
-
 function App() {
-  const [auth, setAuth] = useState(() => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-    const state = {
-      isAuthenticated: !!token && !!role,
-      userRole: role,
-      restaurantId: localStorage.getItem("restaurant_id")
-    };
-    console.log("[App] Initial Auth State:", state);
-    return state;
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("token")
+  );
 
-  const updateAuth = () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-    const newState = {
-      isAuthenticated: !!token && !!role,
-      userRole: role,
-      restaurantId: localStorage.getItem("restaurant_id")
-    };
-    console.log("[App] Updating Auth State:", newState);
-    setAuth(newState);
+  const userRole = localStorage.getItem("role");
+  const restaurantId = localStorage.getItem("restaurant_id");
+
+  const handleAuthChange = (auth) => {
+    setIsAuthenticated(auth);
   };
 
+  // Sync auth across tabs & refresh
   useEffect(() => {
-    console.log("[App] Auth Effect - Current logic:", auth);
-  }, [auth]);
+    const syncAuth = () => {
+      setIsAuthenticated(!!localStorage.getItem("token"));
+    };
+    window.addEventListener("storage", syncAuth);
+    return () => window.removeEventListener("storage", syncAuth);
+  }, []);
 
   return (
     <Router>
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="h-10 w-10 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div></div>}>
-        <Routes>
-          {/* =========================================================
-                PUBLIC ROUTES
-               ========================================================= */}
+      <Routes>
 
-          {/* Root is now Browse Restaurants */}
-          <Route path="/" element={<BrowseRestaurants />} />
+        {/* ================= PUBLIC ROUTES ================= */}
+        <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
 
+        <Route
+          path="/login"
+          element={
+            !isAuthenticated ? (
+              <Login setAuth={handleAuthChange} />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
+        />
+
+        {/* Browse / Public Restaurant Routes */}
+        <Route path="/browse" element={<BrowseRestaurants />} />
+        <Route path="/:country" element={<BrowseRestaurants />} />
+        <Route path="/:country/:state" element={<BrowseRestaurants />} />
+        <Route path="/:country/:state/:city" element={<BrowseRestaurants />} />
+        <Route
+          path="/:country/:state/:city/:identifier"
+          element={<PublicRestaurantView isPublicView />}
+        />
+
+        {/* ================= PROTECTED APP ================= */}
+        <Route
+          element={
+            isAuthenticated ? (
+              <Layout
+                setAuth={handleAuthChange}
+                userRole={userRole}
+                restaurantId={restaurantId}
+              />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          {/* ROLE BASED DASHBOARD REDIRECT */}
           <Route
-            path="/login"
+            path="/dashboard"
             element={
-              auth.isAuthenticated ? (
-                (() => {
-                  const target = auth.userRole === "admin" ? "/admin/dashboard" : "/restaurant/dashboard";
-                  console.log("[App] Already authenticated at /login, redirecting to:", target);
-                  return <Navigate to={target} replace />;
-                })()
+              userRole === "admin" ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : userRole === "restaurant" ? (
+                <Navigate to="/restaurant/dashboard" replace />
               ) : (
-                <Login setAuth={updateAuth} />
+                <Navigate to="/login" replace />
               )
             }
           />
 
-          <Route path="/browse" element={<BrowseRestaurants />} />
-
-          {/* =========================================================
-                PROTECTED ROUTES (ADMIN & RESTAURANT)
-               ========================================================= */}
+          {/* ================= ADMIN ROUTES ================= */}
+          <Route
+            path="admin/dashboard"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                allowRole="admin"
+                userRole={userRole}
+              >
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
+            path="admin/restaurants"
             element={
-              auth.isAuthenticated ? (
-                <Layout
-                  setAuth={updateAuth}
-                  userRole={auth.userRole}
-                  restaurantId={auth.restaurantId}
-                />
-              ) : (
-                <Navigate to="/login" />
-              )
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="admin" userRole={userRole}>
+                <RestaurantManager />
+              </ProtectedRoute>
             }
-          >
-            {/* Admin Routes */}
-            <Route path="admin/dashboard" element={<ProtectedRoute isAllowed={auth.userRole === "admin"}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="admin/restaurants" element={<ProtectedRoute isAllowed={auth.userRole === "admin"}><RestaurantManager /></ProtectedRoute>} />
-            <Route path="admin/restaurants/new" element={<ProtectedRoute isAllowed={auth.userRole === "admin"}><AddRestaurant /></ProtectedRoute>} />
-            <Route path="admin/restaurants/edit/:id" element={<ProtectedRoute isAllowed={auth.userRole === "admin"}><AddRestaurant /></ProtectedRoute>} />
-            <Route path="admin/gallery" element={<ProtectedRoute isAllowed={auth.userRole === "admin"}><MediaGallery /></ProtectedRoute>} />
+          />
 
-            {/* Restaurant Routes */}
-            <Route path="restaurant/dashboard" element={<ProtectedRoute isAllowed={auth.userRole === "restaurant"}><RestaurantDashboard /></ProtectedRoute>} />
-            <Route path="restaurant/:rest_id/menu" element={<ProtectedRoute isAllowed={auth.userRole === "restaurant"}><MenuManager /></ProtectedRoute>} />
-            <Route path="restaurant/:rest_id/categories" element={<ProtectedRoute isAllowed={auth.userRole === "restaurant"}><CategoryManager /></ProtectedRoute>} />
-            <Route path="restaurant/:rest_id/menu/add" element={<ProtectedRoute isAllowed={auth.userRole === "restaurant"}><AddProduct /></ProtectedRoute>} />
-            <Route path="restaurant/:rest_id/menu/edit/:product_id" element={<ProtectedRoute isAllowed={auth.userRole === "restaurant"}><AddProduct /></ProtectedRoute>} />
-            <Route path="testupload" element={<ProtectedRoute isAllowed={auth.userRole === "restaurant"}><TestUpload /></ProtectedRoute>} />
-          </Route>
+          <Route
+            path="admin/restaurants/new"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="admin" userRole={userRole}>
+                <AddRestaurant />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Greedy Dynamic Routes (Must be last) */}
-          <Route path="/:country" element={<BrowseRestaurants />} />
-          <Route path="/:country/:state" element={<BrowseRestaurants />} />
-          <Route path="/:country/:state/:city" element={<BrowseRestaurants />} />
-          <Route path="/:country/:state/:city/:identifier" element={<PublicRestaurantView isPublicView={true} />} />
+          <Route
+            path="admin/restaurants/edit/:id"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="admin" userRole={userRole}>
+                <AddRestaurant />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* ================= RESTAURANT ROUTES ================= */}
+          <Route
+            path="restaurant/dashboard"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="restaurant" userRole={userRole}>
+                <RestaurantDashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        </Routes>
-      </Suspense>
+          <Route
+            path="restaurant/:rest_id/menu"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="restaurant" userRole={userRole}>
+                <MenuManager />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ CATEGORY ROUTE (FIXED) */}
+          <Route
+            path="restaurant/:rest_id/categories"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="restaurant" userRole={userRole}>
+                <CategoryManager />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="restaurant/:rest_id/menu/add"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="restaurant" userRole={userRole}>
+                <AddProduct />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="restaurant/:rest_id/menu/edit/:product_id"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="restaurant" userRole={userRole}>
+                <AddProduct />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="testupload"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="restaurant" userRole={userRole}>
+                <TestUpload />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        {/* ================= FALLBACK ================= */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+
+      </Routes>
     </Router>
   );
 }

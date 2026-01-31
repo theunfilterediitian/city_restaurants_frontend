@@ -135,7 +135,6 @@ export default function RestaurantManager() {
                 </td>
                 <td className="px-8 py-6">
                   <div className="text-sm font-bold text-slate-600">{r.location || "No Location"}</div>
-                  {r.landmark && <div className="text-[11px] font-bold text-indigo-500 mb-1">Near {r.landmark}</div>}
                   <div className="text-[10px] font-black text-slate-400 uppercase mt-1 tracking-tighter">{r.email}</div>
                 </td>
                 <td className="px-8 py-6 text-right">

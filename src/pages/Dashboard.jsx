@@ -27,16 +27,16 @@ export default function Dashboard() {
       {/* Responsive Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {restaurants.map((res) => (
-          <div 
-            key={res.id} 
+          <div
+            key={res.id}
             className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
           >
             <div className="mb-4">
               <h3 className="text-xl font-semibold text-gray-800">{res.name}</h3>
               <p className="text-sm text-gray-500 mt-1">ID: #{res.id}</p>
             </div>
-            
-            <button 
+
+            <button
               onClick={() => navigate(`/restaurant/${res.id}/menu`)}
               className="w-full mt-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium py-2.5 px-4 rounded-lg border border-gray-300 transition-colors"
             >

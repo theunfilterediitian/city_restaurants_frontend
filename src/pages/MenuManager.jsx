@@ -1,14 +1,12 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProductStore } from '../store/useProductStore';
-import { Edit3, Plus, ImageOff, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
-
+import { Edit3, Plus, ImageOff, CheckCircle2, XCircle } from 'lucide-react';
 
 export default function MenuManager() {
   const navigate = useNavigate();
   const { rest_id } = useParams();
-  const { products, fetchProducts, toggleAvailability, deleteProduct, isLoading } = useProductStore();
-
+  const { products, fetchProducts, toggleAvailability, isLoading } = useProductStore();
 
   useEffect(() => {
     if (rest_id) fetchProducts(rest_id);
@@ -144,18 +142,6 @@ export default function MenuManager() {
                     >
                       <Edit3 size={18} />
                     </button>
-                    <button
-                      onClick={async () => {
-                        if (window.confirm("Are you sure you want to delete this product?")) {
-                          await deleteProduct(p.id);
-                        }
-                      }}
-                      className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100 group-hover:scale-110"
-                      title="Delete Dish"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-
                   </td>
                 </tr>
               ))
