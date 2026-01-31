@@ -759,7 +759,6 @@ function InfoSidebar({ isOpen, onClose, restaurant }) {
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Connect with us</h4>
 
-<<<<<<< Updated upstream
                   <div className="space-y-2">
                     <a href={`tel:${restaurant.phone_number}`} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 hover:border-primary hover:shadow-lg hover:shadow-primary-shadow transition-all group">
                       <div className="w-8 h-8 rounded-lg bg-primary-extraLight flex items-center justify-center text-primary transition-colors border border-primary-light/50">
@@ -768,15 +767,6 @@ function InfoSidebar({ isOpen, onClose, restaurant }) {
                       <span className="text-xs font-black text-gray-600 uppercase tracking-wider">{restaurant.phone_number}</span>
                     </a>
                   </div>
-=======
-                <div className="space-y-2">
-                  <a href={`tel:${restaurant.phone_number || '+91 8543832619'}`} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 hover:border-primary hover:shadow-lg hover:shadow-primary-shadow transition-all group">
-                    <div className="w-8 h-8 rounded-lg bg-primary-extraLight flex items-center justify-center text-primary transition-colors border border-primary-light/50">
-                      <Phone size={14} />
-                    </div>
-                    <span className="text-xs font-black text-gray-600 uppercase tracking-wider">{restaurant.phone_number || '+91 8543832619'}</span>
-                  </a>
->>>>>>> Stashed changes
                 </div>
               )}
 
@@ -791,7 +781,7 @@ function InfoSidebar({ isOpen, onClose, restaurant }) {
                     <h4 className="text-[10px] font-black uppercase tracking-widest">Home Delivery</h4>
                   </div>
                   <p className="text-xs font-bold text-gray-400 mb-4 leading-relaxed">
-                    Order directly and get delivery within <span className="text-white font-black">{restaurant.delivery_radius || '5 KM'}</span> radius.
+                    Order directly and get delivery within <span className="text-white font-black">{restaurant.delivery_radius || '2 KM'}</span> radius.
                   </p>
                   <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest bg-white/5 p-2 rounded-lg border border-white/10 w-fit">
                     <ClockIcon size={12} />
@@ -820,7 +810,7 @@ function InfoSidebar({ isOpen, onClose, restaurant }) {
                         />
                       </div>
                       <div>
-                        <span className="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-0.5">Available on</span>
+                        <span className="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-0.5">Soon on</span>
                         <span className="block text-sm font-black text-white uppercase tracking-tight leading-none">Google Play</span>
                       </div>
                     </div>
