@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../services/api";
-import { ArrowLeft, Save, Building2, AlertCircle, MapPin, Globe, Camera, X } from "lucide-react";
+import { ArrowLeft, Save, Building2, AlertCircle, MapPin, Globe, Camera, X, Phone } from "lucide-react";
 import { Country, State, City } from 'country-state-city';
 
 export default function AddRestaurant() {
@@ -28,6 +28,8 @@ export default function AddRestaurant() {
     state_code: "",
     city_code: "",
     location: "",
+    phone_number: "",
+    landmark: "",
     logo: null // For the File object
   });
 
@@ -55,6 +57,8 @@ export default function AddRestaurant() {
         try {
           const res = await api.getRestaurantById(id);
           const data = res.data;
+
+          console.log(res.data)
 
           setFormData({
             ...data,
@@ -134,6 +138,8 @@ export default function AddRestaurant() {
       data.append("state_code", formData.state_code);
       data.append("city_code", formData.city_code);
       data.append("location", formData.location);
+      data.append("phone_number", formData.phone_number || "");
+      data.append("landmark", formData.landmark || "");
       data.append("type", formData.type);
       data.append("pure_veg", formData.pure_veg);
 
@@ -246,6 +252,19 @@ export default function AddRestaurant() {
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                      type="tel"
+                      placeholder="+1 234 567 890"
+                      className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                      value={formData.phone_number || ""}
+                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -320,6 +339,14 @@ export default function AddRestaurant() {
                       <span className="font-semibold">{formData.location}</span>
                     </div>
                   )}
+
+                  <input
+                    type="text"
+                    placeholder="Landmark (Optional)"
+                    className="w-full px-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={formData.landmark || ""}
+                    onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                  />
                 </div>
 
                 <div className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${formData.pure_veg ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100'}`}>

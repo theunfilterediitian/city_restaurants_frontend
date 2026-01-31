@@ -249,6 +249,8 @@ export default function PublicRestaurantView() {
       setData(res.data);
       setLoading(false);
 
+      console.log(res.data)
+
       // Initialize all categories as expanded
       if (res.data?.products) {
         const categories = {};

@@ -14,6 +14,7 @@ import AddProduct from "./pages/AddProduct";
 import TestUpload from "./pages/testupload";
 import PublicRestaurantView from "./pages/PublicRestaurantView";
 import BrowseRestaurants from "./pages/BrowseRestaurants";
+import MediaGallery from "./pages/MediaGallery";
 
 // Layout
 import Layout from "./components/Layout";
@@ -141,6 +142,15 @@ function App() {
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="admin" userRole={userRole}>
                 <AddRestaurant />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="admin/gallery"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} allowRole="admin" userRole={userRole}>
+                <MediaGallery />
               </ProtectedRoute>
             }
           />

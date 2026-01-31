@@ -89,13 +89,13 @@ export default function Layout({ setAuth, userRole, restaurantId }) {
               </NavLink>
 
 
-              {/* <NavLink to="/admin/gallery" className={navItemClass}>
+              <NavLink to="/admin/gallery" className={navItemClass}>
                 <div className="flex items-center gap-3">
                   <ImageIcon size={18} />
                   <span className="text-sm font-medium">Image Gallery</span>
                 </div>
                 <ChevronRight size={14} className="opacity-0 group-hover:opacity-100" />
-              </NavLink> */}
+              </NavLink>
             </>
           )}
 
