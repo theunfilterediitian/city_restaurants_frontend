@@ -27,17 +27,32 @@ export const useProductStore = create((set, get) => ({
   },
 
   // Inside useProductStore.js
-  toggleAvailability: async (product_id, current_available) => { // Added current status param
+  toggleAvailability: async (product_id, current_available) => {
+    const newStatus = !current_available;
+    
+    // OPTIMISTIC UPDATE: Update state immediately
+    set((state) => ({
+      products: state.products.map((p) =>
+        p.id === product_id ? { ...p, available: newStatus } : p
+      )
+    }));
+
     try {
-      // We send the OPPOSITE of current availability to the API
-      const { data } = await api.updateAvailability(product_id, !current_available);
+      const { data } = await api.updateAvailability(product_id, newStatus);
+      // Synchronize with server response in case of any slight difference
       set((state) => ({
         products: state.products.map((p) =>
           p.id === product_id ? { ...p, available: data.available } : p
         )
       }));
     } catch (error) {
-      console.error('Error updating availability:', error);
+      console.error('Error updating availability, reverting state:', error);
+      // REVERT: If API fails, set it back to the old value
+      set((state) => ({
+        products: state.products.map((p) =>
+          p.id === product_id ? { ...p, available: current_available } : p
+        )
+      }));
     }
   },
 

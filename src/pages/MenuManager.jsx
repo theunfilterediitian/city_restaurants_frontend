@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProductStore } from '../store/useProductStore';
-import { Edit3, Plus, ImageOff, Search } from 'lucide-react';
+import { Edit3, Plus, ImageOff, Search, Loader2, ChevronRight } from 'lucide-react';
 
 export default function MenuManager() {
   const navigate = useNavigate();
@@ -24,157 +24,142 @@ export default function MenuManager() {
   }, [products, searchTerm]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Menu Items</h2>
-          <p className="text-gray-500 text-sm">Manage dishes, sizes, and dietary preferences.</p>
-        </div>
-        <div className="flex flex-col md:flex-row flex-1 gap-4 items-center justify-between w-full lg:w-auto">
-          <div className="relative w-full md:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-              <Search size={18} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search dishes..."
-              className="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+    <div className="flex flex-col gap-4 md:gap-6 pb-20">
+      {/* Header Section */}
+      <div className="bg-white rounded-[1.5rem] md:rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-6">
+          <div className="space-y-1">
+            <h2 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight">Menu Items</h2>
+            <p className="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-widest">Global Catalog Management</p>
           </div>
 
-          <button
-            onClick={() => navigate(`/restaurant/${rest_id}/menu/add`)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-md active:scale-95 whitespace-nowrap w-full md:w-auto justify-center"
-          >
-            <Plus size={18} /> Add New Dish
-          </button>
+          <div className="flex flex-col md:flex-row gap-3 flex-1 lg:max-w-2xl">
+            <div className="relative flex-1 group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-amber-600 transition-colors">
+                <Search size={18} strokeWidth={2.5} />
+              </div>
+              <input
+                type="text"
+                placeholder="Find a dish..."
+                className="block w-full pl-11 pr-4 py-3 md:py-3 border border-gray-100 rounded-xl md:rounded-2xl leading-5 bg-gray-50/50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 transition-all text-sm font-bold"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <button
+              onClick={() => navigate(`/restaurant/${rest_id}/menu/add`)}
+              className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 md:py-3 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-200 active:scale-95 whitespace-nowrap justify-center"
+            >
+              <Plus size={18} strokeWidth={3} /> Add New
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50/50 border-b border-gray-100">
-            <tr>
-              <th className="px-6 py-4 text-xs font-bold uppercase text-gray-400 tracking-widest">Product</th>
-              <th className="px-6 py-4 text-xs font-bold uppercase text-gray-400 tracking-widest">Category</th>
-              <th className="px-6 py-4 text-xs font-bold uppercase text-gray-400 tracking-widest">Pricing & Sizes</th>
-              <th className="px-6 py-4 text-xs font-bold uppercase text-gray-400 tracking-widest text-center">Status</th>
-              <th className="px-6 py-4 text-xs font-bold uppercase text-gray-400 tracking-widest text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {isLoading ? (
-              <tr>
-                <td colSpan="5" className="p-20 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-gray-400 font-medium">Loading your menu...</span>
-                  </div>
-                </td>
-              </tr>
-            ) : filteredProducts.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="p-20 text-center text-gray-400 italic">
-                  {searchTerm ? `No dishes found matching "${searchTerm}"` : 'No products found. Click "Add New Dish" to get started.'}
-                </td>
-              </tr>
-            ) : (
-              filteredProducts.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50/80 transition-colors group">
-                  {/* Product Column */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-lg bg-gray-100 border flex-shrink-0 flex items-center justify-center overflow-hidden relative">
-                        {/* Check for image_url or images array */}
-                        {p.images?.[0]?.image_url || p.image_url ? (
-                          <img
-                            src={p.images?.[0]?.image_url || p.image_url}
-                            alt={p.name}
-                            className="object-cover h-full w-full"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center text-[10px] text-gray-400">
-                            <ImageOff size={16} />
-                            <span>No Image</span>
-                          </div>
-                        )}
-                        {/* Veg/Non-Veg Badge on Image */}
-                        <span className={`absolute top-0.5 right-0.5 w-3 h-3 rounded-full border-2 border-white ${p.veg ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                      </div>
-                      <div className="max-w-[200px]">
-                        <div className="font-bold text-gray-800 truncate">{p.name}</div>
-                        <p className="text-xs text-gray-500 line-clamp-1 italic">
-                          {p.description || p.remark || 'No description provided'}
-                        </p>
+      {/* Content Area */}
+      {isLoading ? (
+        <div className="bg-white rounded-[1.5rem] p-20 flex flex-col items-center justify-center gap-4 border border-gray-100">
+          <Loader2 className="w-10 h-10 text-amber-600 animate-spin" strokeWidth={3} />
+          <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Syncing Menu...</span>
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="bg-white rounded-[1.5rem] p-16 text-center border border-gray-100">
+          <div className="mb-4 flex justify-center">
+            <div className="p-4 bg-gray-50 rounded-full text-gray-300">
+              <Search size={40} />
+            </div>
+          </div>
+          <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">
+            {searchTerm ? `No results for "${searchTerm}"` : 'Your menu is empty'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredProducts.map((p) => (
+            <div key={p.id} className="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col group transition-all hover:shadow-md hover:border-indigo-100">
+              {/* Card Header: Image & Basic Info */}
+              <div className="p-4 flex gap-4">
+                <div className="h-20 w-20 md:h-24 md:w-24 rounded-2xl bg-gray-50 border border-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden relative shadow-inner">
+                  {p.images?.[0]?.image_url || p.image_url ? (
+                    <img
+                      src={p.images?.[0]?.image_url || p.image_url}
+                      alt={p.name}
+                      className="object-cover h-full w-full group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center text-[10px] text-gray-300 font-black uppercase">
+                      <ImageOff size={20} strokeWidth={2} className="mb-1" />
+                      <span>Missing</span>
+                    </div>
+                  )}
+                  {/* Veg Indicator */}
+                  <div className={`absolute top-2 right-2 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm ${p.veg ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                </div>
+
+                <div className="flex-1 min-w-0 flex flex-col">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-gray-900 uppercase tracking-tight text-sm md:text-base leading-tight truncate">
+                        {p.name}
+                      </h3>
+                      <div className={`text-[9px] font-black uppercase tracking-tight ${p.available ? 'text-amber-500' : 'text-gray-400'}`}>
+                        {p.available ? 'Active' : 'Hidden'}
                       </div>
                     </div>
-                  </td>
-
-                  {/* Category Column */}
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {p.categories?.length > 0 ? (
-                        p.categories.map(cat => (
-                          <span key={cat.id} className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded uppercase border border-indigo-100">
-                            {cat.name}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">Main Menu</span>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* Sizes & Pricing Column */}
-                  <td className="px-6 py-4">
-                    <div className="space-y-1 min-w-[120px]">
-                      {p.sizes?.length > 0 ? (
-                        p.sizes.map((s) => (
-                          <div key={s.id} className="flex justify-between text-xs border-b border-gray-50 last:border-0 pb-1">
-                            <span className="text-gray-500 font-medium">{s.size_label}</span>
-                            <span className="font-bold text-gray-700 ml-4">₹{s.price}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-red-500 text-xs font-bold bg-red-50 px-2 py-0.5 rounded">Price Missing</span>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* Availability Toggle */}
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleAvailability(p.id, p.available)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${p.available ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all focus:outline-none shadow-sm ${p.available ? 'bg-amber-500' : 'bg-gray-200'}`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${p.available ? 'translate-x-6' : 'translate-x-1'}`} />
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${p.available ? 'translate-x-[1.25rem]' : 'translate-x-1'}`} />
                       </button>
-                      <span className={`text-[10px] font-bold uppercase ${p.available ? 'text-emerald-600' : 'text-gray-400'}`}>
-                        {p.available ? 'Available' : 'Unavailable'}
-                      </span>
+                      <button
+                        onClick={() => navigate(`/restaurant/${rest_id}/menu/edit/${p.id}`)}
+                        className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                      >
+                        <Edit3 size={16} strokeWidth={2.5} />
+                      </button>
                     </div>
-                  </td>
+                  </div>
 
-                  {/* Actions */}
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => navigate(`/restaurant/${rest_id}/menu/edit/${p.id}`)}
-                      className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-transparent hover:border-indigo-100 group-hover:scale-110"
-                      title="Edit Dish"
-                    >
-                      <Edit3 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                  <p className="text-[10px] text-gray-400 line-clamp-1 mt-1 font-medium italic">
+                    {p.description || p.remark || 'No description provided'}
+                  </p>
+
+                  <div className="mt-auto pt-2 flex flex-wrap gap-1">
+                    {p.categories?.length > 0 ? (
+                      p.categories.map(cat => (
+                        <span key={cat.id} className="text-[8px] font-black px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded-md uppercase border border-gray-100">
+                          {cat.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-300 text-[8px] uppercase font-black tracking-tighter">Main</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing Section */}
+              <div className="px-4 py-3 bg-gray-50/50 border-t border-gray-50">
+                <div className="space-y-1.5">
+                  {p.sizes?.length > 0 ? (
+                    p.sizes.slice(0, 3).map((s) => (
+                      <div key={s.id} className="flex justify-between items-center text-[10px]">
+                        <span className="text-gray-500 font-black uppercase tracking-widest">{s.size_label}</span>
+                        <span className="font-black text-amber-600 tracking-tight">₹{s.price}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-[10px] font-black uppercase text-red-500">No Pricing</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

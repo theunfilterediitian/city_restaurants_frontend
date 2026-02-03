@@ -120,7 +120,7 @@ const ProductCard = ({ product, cart, onAddTrigger }) => {
             <div className={`w-3.5 h-3.5 border-2 ${product.veg ? 'border-green-600' : 'border-red-600'} flex items-center justify-center rounded-sm shrink-0`}>
               <div className={`w-1.5 h-1.5 rounded-full ${product.veg ? 'bg-green-600' : 'bg-red-600'}`} />
             </div>
-            <h3 className="font-bold text-gray-900 text-lg truncate uppercase tracking-tight">
+            <h3 className="font-bold text-gray-900 text-md uppercase tracking-tight">
               {product.name}
             </h3>
           </div>
@@ -159,7 +159,7 @@ const ProductCard = ({ product, cart, onAddTrigger }) => {
       </div>
 
       {/* Options Section */}
-      <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+      <div className="mt-2 pt-2 border-t border-slate-100 space-y-4">
         {product.sizes?.map((size, idx) => {
           const cartItem = cart.items.find(i => i.productId === product.id && i.sizeLabel === size.size_label);
           const qty = cartItem?.qty || 0;
@@ -167,22 +167,22 @@ const ProductCard = ({ product, cart, onAddTrigger }) => {
           return (
             <div key={size.id || idx} className="flex items-center justify-between group/opt">
               <div className="flex flex-col">
-                <span className="text-sm font-black text-slate-800 uppercase tracking-tight group-hover/opt:text-amber-600 transition-colors">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest group-hover/opt:text-amber-600 transition-colors">
                   {size.size_label}
                 </span>
-                <span className="text-lg font-black text-slate-900">₹{size.price}</span>
+                <span className="text-base font-bold text-gray-800">₹{size.price}</span>
               </div>
 
               <div className="min-w-[120px] flex justify-end">
                 {qty > 0 ? (
-                  <div className="flex items-center gap-3 bg-amber-50 px-2 py-1 rounded-xl border border-amber-100 shadow-sm animate-fadeIn">
+                  <div className="flex items-center gap-3 bg-amber-50/50 px-2 py-1 rounded-xl border border-amber-100 shadow-sm animate-fadeIn">
                     <button
                       onClick={() => cart.updateQty(product.id, size.size_label, qty - 1)}
                       className="w-8 h-8 rounded-full bg-white text-amber-600 flex items-center justify-center hover:bg-amber-100 transition-all border border-amber-100"
                     >
                       <Minus size={14} />
                     </button>
-                    <span className="font-black text-slate-900 w-6 text-center text-sm">{qty}</span>
+                    <span className="font-bold text-gray-700 w-6 text-center text-sm">{qty}</span>
                     <button
                       onClick={(e) => {
                         cart.updateQty(product.id, size.size_label, qty + 1);
@@ -206,9 +206,9 @@ const ProductCard = ({ product, cart, onAddTrigger }) => {
                       });
                       onAddTrigger?.(e);
                     }}
-                    className="h-10 px-6 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-600 transition-all flex items-center gap-2 group/btn active:scale-95"
+                    className="h-9 px-5 bg-gray-900 text-white rounded-lg font-bold text-[10px] uppercase tracking-wider hover:bg-amber-600 transition-all flex items-center gap-2 group/btn active:scale-95 shadow-sm"
                   >
-                    <Plus size={14} className="group-hover/btn:rotate-90 transition-transform" />
+                    <Plus size={12} className="group-hover/btn:rotate-90 transition-transform" />
                     Add
                   </button>
                 )}
@@ -647,6 +647,7 @@ export default function PublicRestaurantView() {
       <>
         <button
           onClick={() => setCartOpen(true)}
+          data-cart-button="true"
           className="fixed bottom-6 right-6 z-40 animate-bounce-once"
           style={{ animationDelay: '0.5s' }}
         >

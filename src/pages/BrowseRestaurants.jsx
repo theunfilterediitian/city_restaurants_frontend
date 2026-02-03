@@ -249,7 +249,7 @@ export default function BrowseRestaurants() {
             })}
           </div>
         ) : (
-          <div className="py-32 text-center">
+          <div className="py-32 text-center flex flex-col items-center justify-center">
             <div className="h-24 w-24 bg-slate-50 mx-auto rounded-full flex items-center justify-center text-slate-200 mb-8"><Search size={48} /></div>
             <h3 className="text-3xl font-black text-slate-900 mb-2">Portfolio Empty</h3>
             <p className="text-slate-400 font-bold uppercase tracking-widest text-[11px]">No matching experiences found in this territory</p>
