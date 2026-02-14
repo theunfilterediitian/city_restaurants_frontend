@@ -44,7 +44,7 @@ export default function Login({ setAuth }) {
             <div className="h-16 w-16 bg-gradient-to-tr from-amber-400 to-amber-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-amber-500/30 rotate-3 mb-6">
               <LogIn className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tightest leading-none">Access <span className="text-amber-500">Portal</span></h1>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tightest leading-none uppercase italic">Access <span className="text-amber-500 italic-none">Portal</span></h1>
             <p className="mt-3 text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase">Enterprise Management OS</p>
           </div>
 

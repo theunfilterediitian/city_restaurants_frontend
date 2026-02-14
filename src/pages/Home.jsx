@@ -89,7 +89,7 @@ export default function Home({ isAuthenticated }) {
                                 ))}
                             </div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                                Trusted by <span className="text-slate-900 font-black">500+</span> Premium Outlets
+                                Trusted by <span className="text-slate-900 font-black">100+</span> Premium Outlets
                             </p>
                         </div>
                     </div>
@@ -121,8 +121,8 @@ export default function Home({ isAuthenticated }) {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
                         {[
-                            { label: 'Restaurants Registered', value: '1.2k+' },
-                            { label: 'Daily Interactions', value: '45k+' },
+                            { label: 'Restaurants Registered', value: '100+' },
+                            { label: 'Daily Interactions', value: '12K+' },
                             { label: 'Uptime Reliability', value: '99.9%' },
                             { label: 'Merchant Growth', value: '40%' }
                         ].map((s, idx) => (
@@ -136,7 +136,7 @@ export default function Home({ isAuthenticated }) {
             </section>
 
             {/* --- FEATURES --- */}
-            <section id="features" className="py-32 bg-[#FAFAFA]">
+            <section id="features" className="py-10 md:py-32 bg-[#FAFAFA]">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center max-w-2xl mx-auto mb-24">
                         <h2 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] mb-4">Core Capabilities</h2>
@@ -176,7 +176,7 @@ export default function Home({ isAuthenticated }) {
             </section>
 
             {/* --- CTA SECTION --- */}
-            <section className="py-20 px-6">
+            <section className="py-10 md:py-20 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="bg-slate-900 rounded-[3rem] p-10 md:p-20 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-1/3 h-full bg-amber-500/10 -skew-x-12 translate-x-1/2" />
