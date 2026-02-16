@@ -28,10 +28,24 @@ function ProtectedRoute({ isAuthenticated, allowRole, userRole, children }) {
   return children;
 }
 
+function isTokenValid() {
+  const token = localStorage.getItem("token");
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.exp * 1000 < Date.now()) throw new Error("Token expired");
+    return true;
+  } catch (e) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("restaurant_id");
+    localStorage.removeItem("admin_id");
+    return false;
+  }
+}
+
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("token")
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(() => isTokenValid());
 
   const userRole = localStorage.getItem("role");
   const restaurantId = localStorage.getItem("restaurant_id");
@@ -43,7 +57,7 @@ function App() {
   // Sync auth across tabs & refresh
   useEffect(() => {
     const syncAuth = () => {
-      setIsAuthenticated(!!localStorage.getItem("token"));
+      setIsAuthenticated(isTokenValid());
     };
     window.addEventListener("storage", syncAuth);
     return () => window.removeEventListener("storage", syncAuth);

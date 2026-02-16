@@ -10,6 +10,9 @@ const apiClient = axios.create({
   baseURL: 'https://indianrestros.com',
 });
 
+// const apiClient = axios.create({
+//   baseURL: 'https://dev.indianrestros.com',
+// });
 
 
 // const apiClient = axios.create({
@@ -26,6 +29,22 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Auto-logout on 401 (expired / invalid token during session)
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isLoginRequest = error.config?.url?.includes('/auth/login');
+    if (error.response?.status === 401 && !isLoginRequest) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('restaurant_id');
+      localStorage.removeItem('admin_id');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const api = {
   // =========================
