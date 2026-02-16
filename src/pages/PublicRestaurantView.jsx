@@ -859,7 +859,7 @@ function CartModal({ cart, onClose, restaurantName }) {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const total = cart.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
   const totalItems = cart.items.reduce((sum, item) => sum + item.qty, 0);
-  const deliveryFee = total < 300 ? 40 : 0;
+  const deliveryFee = 0;
   const finalTotal = total + deliveryFee;
 
   return (
